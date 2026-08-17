@@ -14,14 +14,14 @@ export default function LoginPage() {
         <div className="landing-info-section">
           <div className="landing-logo">
             <div className="login-logo-hex">⬡</div>
-            <span className="landing-brand-title">Lockin DFS</span>
+            <span className="landing-brand-title">LockIn</span>
           </div>
 
           <h1 className="landing-headline">
             Private, Secure, & Distributed Cloud Storage.
           </h1>
           <p className="landing-description">
-            Lockin DFS is a self-hosted Distributed File System (DFS) designed to run on personal clusters like Raspberry Pis. By combining multiple storage nodes, Lockin DFS offers redundant and secure cloud storage under your own control.
+            LockIn is a self-hosted Distributed File System (DFS) designed to run on personal clusters like Raspberry Pis. By combining multiple storage nodes, LockIn offers redundant and secure cloud storage under your own control.
           </p>
 
           <div className="landing-features-grid">
@@ -62,7 +62,7 @@ export default function LoginPage() {
           <div className="login-card">
             <div className="login-brand-mobile">
               <div className="login-logo-hex">⬡</div>
-              <span className="login-brand-name">LOCKIN DFS</span>
+              <span className="login-brand-name">LOCKIN</span>
             </div>
 
             <h2 className="login-title">
