@@ -1,0 +1,12 @@
+{
+  "rewrites": [
+    {
+      "source": "/auth/:path*",
+      "destination": "https://dfs.flyinglockin.site/auth/:path*"
+    },
+    {
+      "source": "/api/:path*",
+      "destination": "https://dfs.flyinglockin.site/:path*"
+    }
+  ]
+}
