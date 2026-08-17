@@ -20,34 +20,58 @@ export default function LoginPage() {
           <h1 className="landing-headline">
             Private, Secure, & Distributed Cloud Storage.
           </h1>
-          <p className="landing-description">
-            LockIn is a self-hosted Distributed File System (DFS) designed to run on personal clusters like Raspberry Pis. By combining multiple storage nodes, LockIn offers redundant and secure cloud storage under your own control.
-          </p>
+          
+          <div className="landing-section">
+            <h2>About LockIn</h2>
+            <p className="landing-description">
+              LockIn is a self-hosted Distributed File System (DFS) designed to run on personal clusters like Raspberry Pis. By combining multiple storage nodes, LockIn offers redundant, client-side encrypted, and secure cloud storage under your own control.
+            </p>
+          </div>
 
-          <div className="landing-features-grid">
-            <div className="landing-feature-card">
-              <span className="feature-icon-badge">🔒</span>
-              <div>
-                <h3>AES-GCM Encryption</h3>
-                <p>Files are chunked and encrypted on the client side before leaving your browser.</p>
+          {/* Detailed Functionality Explanation */}
+          <div className="landing-section">
+            <h2>Core Functionality</h2>
+            <div className="landing-features-grid">
+              <div className="landing-feature-card">
+                <span className="feature-icon-badge">🔒</span>
+                <div>
+                  <h3>AES-GCM Client-Side Encryption</h3>
+                  <p>All file encryption is performed directly in your browser using zero-knowledge keys. Your raw file data is never sent to the coordinator or nodes unencrypted.</p>
+                </div>
+              </div>
+
+              <div className="landing-feature-card">
+                <span className="feature-icon-badge">⚡</span>
+                <div>
+                  <h3>3x Replicated Redundancy</h3>
+                  <p>Files are split into discrete chunks, encrypted, and replicated three times across different storage drives to guarantee high availability and fault tolerance.</p>
+                </div>
+              </div>
+
+              <div className="landing-feature-card">
+                <span className="feature-icon-badge">🛡️</span>
+                <div>
+                  <h3>Self-Healing Watchdog</h3>
+                  <p>Node processes continuously monitor drive integrity and automatically run system tools to remount and repair corrupted filesystems on the fly.</p>
+                </div>
               </div>
             </div>
+          </div>
 
-            <div className="landing-feature-card">
-              <span className="feature-icon-badge">⚡</span>
-              <div>
-                <h3>3x Replicated Redundancy</h3>
-                <p>Each file is split into chunks and replicated across storage nodes to prevent data loss.</p>
-              </div>
-            </div>
-
-            <div className="landing-feature-card">
-              <span className="feature-icon-badge">🛡️</span>
-              <div>
-                <h3>Self-Healing Storage</h3>
-                <p>Watchdogs automatically monitor drive integrity and repair corruption using NTFS auto-repair.</p>
-              </div>
-            </div>
+          {/* Google OAuth Data Transparency (Google Requirement) */}
+          <div className="landing-section data-transparency">
+            <h2>Data Transparency & Consent</h2>
+            <p>
+              LockIn requests access to your basic Google Account information (email address, full name, and profile picture). We collect and use this data <strong>solely</strong> for the following purposes:
+            </p>
+            <ul>
+              <li><strong>Authentication:</strong> To verify your identity and establish a secure session.</li>
+              <li><strong>Quota Management:</strong> To allocate and enforce your personal storage quota on our cluster.</li>
+              <li><strong>Personalization:</strong> To display your name and profile photo within your private dashboard.</li>
+            </ul>
+            <p className="transparency-note">
+              LockIn does not sell, trade, share, or use your personal data for advertising or tracking. All data is kept confidential within our private database.
+            </p>
           </div>
 
           <div className="landing-legal-links">
