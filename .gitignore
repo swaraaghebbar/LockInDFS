@@ -1,0 +1,22 @@
+.venv/
+venv/
+data/
+__pycache__/
+*.pyc
+scripts/.pids.json
+node_modules/
+dist/
+certs/
+coordinator/metadata.db
+
+# Environment files – never commit secrets
+.env
+.env.*
+!.env.example
+
+# Cloudflare Tunnel – never commit credentials or tokens
+cloudflare/credentials*.json
+cloudflare/*.json
+cloudflare/*.token
+*.token
+cert.pem

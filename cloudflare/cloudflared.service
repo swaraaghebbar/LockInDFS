@@ -1,0 +1,65 @@
+# ─────────────────────────────────────────────────────────────────────────────
+# systemd service unit for cloudflared — DFS Coordinator Tunnel
+#
+# INSTALLATION (on the Raspberry Pi):
+#
+#   1. Copy this file to the systemd directory:
+#        sudo cp cloudflare/cloudflared.service /etc/systemd/system/cloudflared.service
+#
+#   2. Edit the file to set your actual tunnel token OR config file path:
+#        sudo nano /etc/systemd/system/cloudflared.service
+#
+#   3. Reload systemd and enable the service:
+#        sudo systemctl daemon-reload
+#        sudo systemctl enable cloudflared
+#        sudo systemctl start cloudflared
+#
+#   4. Check status:
+#        sudo systemctl status cloudflared
+#        sudo journalctl -u cloudflared -f
+#
+#   5. To stop/disable:
+#        sudo systemctl stop cloudflared
+#        sudo systemctl disable cloudflared
+#
+# See docs/cloudflare_tunnel_setup.md for the full setup walkthrough.
+# ─────────────────────────────────────────────────────────────────────────────
+
+[Unit]
+Description=Cloudflare Tunnel — DFS Coordinator
+After=network-online.target
+Wants=network-online.target
+# Ensure the tunnel starts AFTER the DFS cluster is up.
+# If you run the DFS nodes as systemd services, add them here, e.g.:
+# After=dfs-coordinator.service
+
+[Service]
+Type=simple
+User=pi
+
+# ── Choose ONE of the two ExecStart lines below ───────────────────────────────
+
+# Option A (recommended): Token mode — no credentials file needed.
+# Paste your tunnel token (from Zero Trust dashboard or `cloudflared tunnel token`)
+# as the CF_TUNNEL_TOKEN environment variable.
+# Set it in an EnvironmentFile so the token is never in this unit file.
+EnvironmentFile=-/etc/cloudflared/tunnel.env
+ExecStart=/usr/local/bin/cloudflared tunnel --no-autoupdate run --token ${CF_TUNNEL_TOKEN}
+
+# Option B: Config file mode — uses cloudflare/config.yml with credentials JSON.
+# Comment out the two lines above and uncomment these two lines:
+# ExecStart=/usr/local/bin/cloudflared tunnel --no-autoupdate --config /home/pi/dfs/cloudflare/config.yml run
+
+# ── Service behaviour ─────────────────────────────────────────────────────────
+Restart=on-failure
+RestartSec=5s
+# Give the tunnel 10 seconds to shut down gracefully
+TimeoutStopSec=10
+
+# ── Security hardening ────────────────────────────────────────────────────────
+NoNewPrivileges=yes
+PrivateTmp=yes
+ProtectSystem=full
+
+[Install]
+WantedBy=multi-user.target
