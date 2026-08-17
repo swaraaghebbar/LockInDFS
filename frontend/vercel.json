@@ -7,6 +7,10 @@
     {
       "source": "/api/:path*",
       "destination": "https://dfs.flyinglockin.site/:path*"
+    },
+    {
+      "source": "/(.*)",
+      "destination": "/index.html"
     }
   ]
 }
