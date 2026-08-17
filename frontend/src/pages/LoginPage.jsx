@@ -9,131 +9,22 @@ export default function LoginPage() {
     <div className="login-page">
       <div className="login-backdrop-glow" />
 
-      <div className="landing-container">
-        {/* Left Side: Product Information and Purpose (Google Requirement) */}
-        <div className="landing-info-section">
-          <div className="landing-logo">
-            <div className="login-logo-hex">⬡</div>
-            <span className="landing-brand-title">LockIn</span>
-          </div>
-
-          <h1 className="landing-headline">
-            Private, Secure, & Distributed Cloud Storage.
-          </h1>
-          
-          <div className="landing-section">
-            <h2>About LockIn</h2>
-            <p className="landing-description">
-              LockIn is a self-hosted Distributed File System (DFS) designed to run on personal clusters like Raspberry Pis. By combining multiple storage nodes, LockIn offers redundant, client-side encrypted, and secure cloud storage under your own control.
-            </p>
-          </div>
-
-          {/* Detailed Functionality Explanation */}
-          <div className="landing-section">
-            <h2>Core Features</h2>
-            <div className="landing-features-grid">
-              <div className="landing-feature-card">
-                <span className="feature-icon-badge">🔒</span>
-                <div>
-                  <h3>AES-GCM Client-Side Encryption</h3>
-                  <p>All file encryption is performed directly in your browser using zero-knowledge keys. Your raw file data is never sent to the coordinator or nodes unencrypted.</p>
-                </div>
-              </div>
-
-              <div className="landing-feature-card">
-                <span className="feature-icon-badge">⚡</span>
-                <div>
-                  <h3>3x Replicated Redundancy</h3>
-                  <p>Files are split into discrete chunks, encrypted, and replicated three times across different storage drives to guarantee high availability and fault tolerance.</p>
-                </div>
-              </div>
-
-              <div className="landing-feature-card">
-                <span className="feature-icon-badge">🛡️</span>
-                <div>
-                  <h3>Self-Healing Watchdog</h3>
-                  <p>Node processes continuously monitor drive integrity and automatically run system tools to remount and repair corrupted filesystems on the fly.</p>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          {/* System Architecture Workflow */}
-          <div className="landing-section workflow-section">
-            <h2>How LockIn Works</h2>
-            <div className="workflow-steps">
-              <div className="workflow-step">
-                <div className="step-number">1</div>
-                <div className="step-content">
-                  <h3>Client-Side Chunking & Encryption</h3>
-                  <p>When you select a file to upload, the LockIn client-side React application splits the file into 3 equal chunks. Each chunk is then securely encrypted using AES-GCM cryptography right inside your browser session.</p>
-                </div>
-              </div>
-
-              <div className="workflow-step">
-                <div className="step-number">2</div>
-                <div className="step-content">
-                  <h3>Metadata Coordination</h3>
-                  <p>The client application registers the file's layout, structure, and chunk identifiers with the central FastAPI Coordinator. The Coordinator manages the index metadata database but never has access to the raw file contents or decryption keys.</p>
-                </div>
-              </div>
-
-              <div className="workflow-step">
-                <div className="step-number">3</div>
-                <div className="step-content">
-                  <h3>Distributed Target Storage</h3>
-                  <p>The client uploads the encrypted chunks to designated Storage Nodes running on Raspberry Pi local partitions and connected USB drives. Each node serves as a standalone server managing its physical storage sector.</p>
-                </div>
-              </div>
-
-              <div className="workflow-step">
-                <div className="step-number">4</div>
-                <div className="step-content">
-                  <h3>Failover & Replication</h3>
-                  <p>To ensure high availability, the Coordinator ensures each chunk is replicated across 3 distinct physical disks. If any node or drive goes offline, the system seamlessly redirects file downloads to active replica locations.</p>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          {/* Google OAuth Data Transparency (Google Requirement) */}
-          <div className="landing-section data-transparency">
-            <h2>Data Transparency & Consent</h2>
-            <p>
-              LockIn requests access to your basic Google Account information (email address, full name, and profile picture). We collect and use this data <strong>solely</strong> for the following purposes:
-            </p>
-            <ul>
-              <li><strong>Authentication:</strong> To verify your identity and establish a secure session.</li>
-              <li><strong>Quota Management:</strong> To allocate and enforce your personal storage quota on our cluster.</li>
-              <li><strong>Personalization:</strong> To display your name and profile photo within your private dashboard.</li>
-            </ul>
-            <p className="transparency-note">
-              LockIn does not sell, trade, share, or use your personal data for advertising or tracking. All data is kept confidential within our private database.
-            </p>
-          </div>
-
-          <div className="landing-legal-links">
-            <a href="/privacy.html" target="_blank" rel="noopener noreferrer">Privacy Policy</a>
-            <span className="divider">•</span>
-            <a href="/terms.html" target="_blank" rel="noopener noreferrer">Terms of Service</a>
-          </div>
-        </div>
-
-        {/* Right Side: Interactive Login Box */}
-        <div className="login-card-section">
+      <div className="stacked-landing-container">
+        {/* Top Container: Login Interface */}
+        <div className="top-login-container">
           <div className="login-card">
-            <div className="login-brand-mobile">
+            <div className="login-brand">
               <div className="login-logo-hex">⬡</div>
               <span className="login-brand-name">LOCKIN</span>
             </div>
 
-            <h2 className="login-title">
-              {isAdminMode ? 'System Admin Access' : 'Access your Files'}
-            </h2>
+            <h1 className="login-title">
+              {isAdminMode ? 'System Admin Access' : 'Private Cloud Vault'}
+            </h1>
             <p className="login-subtitle">
               {isAdminMode
                 ? 'Sign in with your authorized admin Google account to manage node topology, cluster metrics, and storage nodes.'
-                : 'Sign in to access your secure distributed file vault.'}
+                : 'Secure, self-hosted distributed cloud storage. Files are client-side encrypted and replicated.'}
             </p>
 
             <div className="login-actions">
@@ -156,7 +47,7 @@ export default function LoginPage() {
                     d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"
                   />
                 </svg>
-                <span>{isAdminMode ? 'Authenticate Admin' : 'Sign in with Google'}</span>
+                <span>{isAdminMode ? 'Authenticate Admin Account' : 'Sign in with Google'}</span>
               </button>
             </div>
 
@@ -177,6 +68,81 @@ export default function LoginPage() {
                 </button>
               )}
             </div>
+          </div>
+        </div>
+
+        {/* Bottom Container: Comprehensive System Documentation */}
+        <div className="bottom-info-container">
+          <div className="info-header">
+            <h2>LockIn Technical Documentation & System Overview</h2>
+            <p>LockIn is a secure, self-hosted Distributed File System (DFS) that orchestrates cluster-wide encrypted storage across personal hardware nodes.</p>
+          </div>
+
+          <div className="info-grid">
+            {/* Section 1: Core Architecture */}
+            <div className="info-block">
+              <h3>1. System Architecture & Operation</h3>
+              <p>
+                LockIn operates on a three-tier model comprising a client-side interface, a centralized metadata Coordinator, and distributed storage nodes:
+              </p>
+              <ul>
+                <li><strong>Vite React Client:</strong> Runs in the user's browser, handling file splitting (chunking) and zero-knowledge client-side encryption.</li>
+                <li><strong>FastAPI Coordinator:</strong> A central server that manages SQLite metadata schemas, registers file chunk maps, tracks storage node health, and delegates read/write permissions.</li>
+                <li><strong>Python Storage Nodes:</strong> Running on target machines (such as Raspberry Pis), these daemons serve upload/download requests for specific chunks and interface with mounted storage drives.</li>
+              </ul>
+            </div>
+
+            {/* Section 2: Cryptographic Security & Redundancy */}
+            <div className="info-block">
+              <h3>2. Cryptography & 3x Redundancy</h3>
+              <p>
+                Security and durability are handled systematically at the client level:
+              </p>
+              <ul>
+                <li><strong>AES-GCM Encryption:</strong> Files are split into three equal chunks and encrypted in-browser using Web Crypto APIs. The Coordinator and storage nodes never receive unencrypted file contents or private decryption keys.</li>
+                <li><strong>Redundancy & Failover:</strong> Each encrypted chunk is replicated 3 times across separate node drives. If a drive fails or is unplugged, the Coordinator automatically redirects file requests to alternative active replicas.</li>
+                <li><strong>Auto-Healing Watchdogs:</strong> Storage nodes run automated local processes that monitor disk mount integrity and execute self-healing repairs (NTFS auto-repair) for filesystem consistency.</li>
+              </ul>
+            </div>
+
+            {/* Section 3: Data Access & OAuth Scopes (Required for Google Review) */}
+            <div className="info-block full-width">
+              <h3>3. Data Privacy & Google OAuth Usage Policy</h3>
+              <p>
+                LockIn requests user authentication via Google OAuth. Here is the transparent breakdown of the data we collect and why we require it:
+              </p>
+              <table>
+                <thead>
+                  <tr>
+                    <th>Requested Scope / Data</th>
+                    <th>Exact Purpose & Application Functionality</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td><strong>Google Email Address</strong></td>
+                    <td>To create a unique account index, authorize file dashboard access, and enforce personal storage quotas (e.g., 1 GB allocation).</td>
+                  </tr>
+                  <tr>
+                    <td><strong>Full Name & Profile Image URL</strong></td>
+                    <td>To customize and personalize your session dashboard when logged into the client application.</td>
+                  </tr>
+                  <tr>
+                    <td><strong>OAuth OpenID Identifiers</strong></td>
+                    <td>To issue and validate signed session cookies (<code>dfs_session</code>) for secure coordinator API requests.</td>
+                  </tr>
+                </tbody>
+              </table>
+              <p className="privacy-assertion">
+                <strong>Data Protection Guarantee:</strong> LockIn is a private, zero-tracking application. We do not sell, distribute, share, or analyze your personal profile data. All metadata is stored locally within our private database.
+              </p>
+            </div>
+          </div>
+
+          <div className="landing-legal-links">
+            <a href="/privacy.html" target="_blank" rel="noopener noreferrer">Privacy Policy</a>
+            <span className="divider">•</span>
+            <a href="/terms.html" target="_blank" rel="noopener noreferrer">Terms of Service</a>
           </div>
         </div>
       </div>

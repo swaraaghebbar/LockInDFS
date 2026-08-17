@@ -471,53 +471,39 @@ input, textarea { font-family: inherit; }
   .stat-row { grid-template-columns: repeat(2, 1fr); }
   .node-grid { grid-template-columns: repeat(2, 1fr); }
 
-  /* Responsive Landing Page */
-  .landing-container {
-    flex-direction: column;
-    max-width: 550px;
-    margin: 20px auto;
+  /* Responsive Stacked Landing Page */
+  .stacked-landing-container {
+    width: 100%;
+    margin: 20px 0;
+    padding: 0 10px;
   }
-  .landing-info-section {
-    border-right: none;
-    border-bottom: 1px solid var(--border);
-    padding: 32px;
+  .info-grid {
+    grid-template-columns: 1fr; /* Single column stack for blocks */
   }
-  .landing-headline {
-    font-size: 1.7rem;
-  }
-  .login-card-section {
-    padding: 32px;
-  }
-  .login-brand-mobile {
-    display: flex;
+  .top-login-container, .bottom-info-container {
+    padding: 32px 20px;
   }
 }
 @media (max-width: 540px) {
   .stat-row { grid-template-columns: 1fr 1fr; }
   .node-grid { grid-template-columns: 1fr; }
 
-  /* Responsive Landing Page Small Screens */
-  .landing-container {
-    margin: 0;
-    border: none;
-    border-radius: 0;
-    box-shadow: none;
-    background: transparent;
+  /* Responsive Stacked Landing Page Small Screens */
+  .top-login-container, .bottom-info-container {
+    padding: 24px 16px;
+    border-radius: var(--radius-lg);
   }
-  .landing-info-section {
-    padding: 24px;
-    background: transparent;
-    border-bottom: 1px solid var(--border);
+  .info-header h2 {
+    font-size: 1.25rem;
   }
-  .landing-headline {
-    font-size: 1.5rem;
+  .info-block {
+    padding: 16px;
   }
-  .login-card-section {
-    padding: 24px;
-    background: transparent;
+  .info-block table {
+    font-size: 0.78rem;
   }
-  .landing-features-grid {
-    display: none; /* Hide features list on very small mobile screens for cleaner login */
+  .info-block th, .info-block td {
+    padding: 8px 6px;
   }
 }
 
@@ -560,227 +546,147 @@ input, textarea { font-family: inherit; }
   z-index: 1;
 }
 
-.landing-container {
+.stacked-landing-container {
   display: flex;
-  width: 1050px;
+  flex-direction: column;
+  width: 900px;
   max-width: 100%;
+  gap: 24px;
+  position: relative;
+  z-index: 2;
+  margin: 40px auto;
+}
+
+.top-login-container {
   background: var(--bg-surface);
   border: 1px solid var(--border-bright);
   border-radius: var(--radius-xl);
   box-shadow: var(--shadow-lg);
-  position: relative;
-  z-index: 2;
-  overflow: hidden;
+  padding: 40px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
 }
 
-.landing-info-section {
-  flex: 1.2;
-  padding: 48px;
-  border-right: 1px solid var(--border);
+.bottom-info-container {
+  background: var(--bg-surface);
+  border: 1px solid var(--border-bright);
+  border-radius: var(--radius-xl);
+  box-shadow: var(--shadow-lg);
+  padding: 40px;
   display: flex;
   flex-direction: column;
   gap: 32px;
-  background: radial-gradient(circle at top left, rgba(61,142,248,0.06), transparent 50%);
 }
 
-.landing-section {
+.info-header {
+  border-bottom: 1px solid var(--border);
+  padding-bottom: 20px;
+}
+
+.info-header h2 {
+  font-size: 1.5rem;
+  font-weight: 800;
+  color: var(--text-primary);
+  margin-bottom: 8px;
+  letter-spacing: -0.02em;
+}
+
+.info-header p {
+  color: var(--text-secondary);
+  font-size: 0.95rem;
+  line-height: 1.5;
+}
+
+.info-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 24px;
+}
+
+.info-block {
   display: flex;
   flex-direction: column;
   gap: 12px;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: 24px;
 }
 
-.landing-section h2 {
-  font-size: 1.15rem;
+.info-block.full-width {
+  grid-column: 1 / -1;
+}
+
+.info-block h3 {
+  font-size: 1.05rem;
   font-weight: 700;
   color: var(--text-primary);
   border-left: 3px solid var(--accent);
   padding-left: 10px;
-  line-height: 1.2;
 }
 
-.landing-logo {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-}
-
-.landing-brand-title {
-  font-size: 1.35rem;
-  font-weight: 800;
-  letter-spacing: -0.01em;
-  background: linear-gradient(to right, var(--text-primary), var(--accent));
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-}
-
-.landing-headline {
-  font-size: 2.1rem;
-  font-weight: 800;
-  line-height: 1.25;
-  letter-spacing: -0.03em;
-  color: var(--text-primary);
-}
-
-.landing-description {
-  font-size: 0.95rem;
-  color: var(--text-secondary);
-  line-height: 1.6;
-}
-
-.landing-features-grid {
-  display: flex;
-  flex-direction: column;
-  gap: 20px;
-}
-
-.landing-feature-card {
-  display: flex;
-  gap: 16px;
-  align-items: flex-start;
-}
-
-.feature-icon-badge {
-  font-size: 1.25rem;
-  width: 38px;
-  height: 38px;
-  background: var(--bg-card);
-  border: 1px solid var(--border);
-  border-radius: var(--radius-md);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex-shrink: 0;
-}
-
-.landing-feature-card h3 {
-  font-size: 0.95rem;
-  font-weight: 600;
-  color: var(--text-primary);
-  margin-bottom: 4px;
-}
-
-.landing-feature-card p {
-  font-size: 0.85rem;
-  color: var(--text-secondary);
-  line-height: 1.45;
-}
-
-.data-transparency ul {
-  padding-left: 20px;
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  color: var(--text-secondary);
+.info-block p {
   font-size: 0.88rem;
-}
-
-.data-transparency strong {
-  color: var(--text-primary);
-}
-
-.transparency-note {
-  font-size: 0.82rem;
-  color: var(--text-dim);
-  font-style: italic;
-  margin-top: 4px;
-  line-height: 1.4;
-}
-
-.workflow-steps {
-  display: flex;
-  flex-direction: column;
-  gap: 24px;
-  position: relative;
-  padding-left: 8px;
-}
-
-/* Connective line between workflow numbers */
-.workflow-steps::before {
-  content: '';
-  position: absolute;
-  left: 21px;
-  top: 14px;
-  bottom: 14px;
-  width: 2px;
-  background: var(--border);
-  z-index: 1;
-}
-
-.workflow-step {
-  display: flex;
-  gap: 20px;
-  position: relative;
-  z-index: 2;
-}
-
-.step-number {
-  width: 28px;
-  height: 28px;
-  border-radius: 50%;
-  background: var(--bg-card);
-  border: 2px solid var(--accent);
-  color: var(--accent);
-  font-size: 0.85rem;
-  font-weight: 700;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex-shrink: 0;
-  box-shadow: 0 0 8px var(--accent-glow);
-}
-
-.step-content h3 {
-  font-size: 0.95rem;
-  font-weight: 600;
-  color: var(--text-primary);
-  margin-bottom: 4px;
-}
-
-.step-content p {
-  font-size: 0.85rem;
   color: var(--text-secondary);
   line-height: 1.5;
 }
 
-.landing-legal-links {
-  display: flex;
-  align-items: center;
-  gap: 12px;
+.info-block ul {
+  padding-left: 20px;
   font-size: 0.85rem;
   color: var(--text-secondary);
-  margin-top: 16px;
-}
-
-.landing-legal-links a:hover {
-  color: var(--accent);
-}
-
-.landing-legal-links .divider {
-  color: var(--text-dim);
-}
-
-.login-card-section {
-  flex: 0.8;
-  padding: 48px;
   display: flex;
-  align-items: center;
-  justify-content: center;
-  background: rgba(10, 13, 20, 0.2);
+  flex-direction: column;
+  gap: 8px;
+}
+
+.info-block table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 12px;
+  font-size: 0.85rem;
+  text-align: left;
+}
+
+.info-block th, .info-block td {
+  padding: 10px 12px;
+  border-bottom: 1px solid var(--border);
+}
+
+.info-block th {
+  color: var(--text-primary);
+  font-weight: 600;
+  background: rgba(255,255,255,0.02);
+}
+
+.info-block td {
+  color: var(--text-secondary);
+}
+
+.privacy-assertion {
+  font-size: 0.82rem;
+  color: var(--text-dim);
+  font-style: italic;
+  margin-top: 12px;
+  line-height: 1.4;
+  border-top: 1px dashed var(--border);
+  padding-top: 12px;
 }
 
 .login-card {
   width: 100%;
-  max-width: 360px;
+  max-width: 400px;
   display: flex;
   flex-direction: column;
   align-items: center;
   text-align: center;
 }
 
-.login-brand-mobile {
-  display: none;
+.login-brand {
+  display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 12px;
   margin-bottom: 24px;
 }
 
@@ -794,6 +700,7 @@ input, textarea { font-family: inherit; }
   color: #fff;
   font-weight: bold;
 }
+
 .login-brand-name {
   font-weight: 700;
   font-size: 1.1rem;
