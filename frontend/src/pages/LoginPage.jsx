@@ -74,75 +74,41 @@ export default function LoginPage() {
         {/* Bottom Container: Comprehensive System Documentation */}
         <div className="bottom-info-container">
           <div className="info-header">
-            <h2>LockIn Technical Documentation & System Overview</h2>
-            <p>LockIn is a secure, self-hosted Distributed File System (DFS) that orchestrates cluster-wide encrypted storage across personal hardware nodes.</p>
+            <h2>Welcome to LockIn</h2>
+            <p>LockIn is a secure, self-hosted Distributed File System (DFS) designed for private cloud storage, end-to-end encrypted file delivery, and resilient cluster data management.</p>
           </div>
 
           <div className="info-grid">
-            {/* Section 1: Core Architecture */}
-            <div className="info-block">
-              <h3>1. System Architecture & Operation</h3>
-              <p>
-                LockIn operates on a three-tier model comprising a client-side interface, a centralized metadata Coordinator, and distributed storage nodes:
-              </p>
-              <ul>
-                <li><strong>Vite React Client:</strong> Runs in the user's browser, handling file splitting (chunking) and zero-knowledge client-side encryption.</li>
-                <li><strong>FastAPI Coordinator:</strong> A central server that manages SQLite metadata schemas, registers file chunk maps, tracks storage node health, and delegates read/write permissions.</li>
-                <li><strong>Python Storage Nodes:</strong> Running on target machines (such as Raspberry Pis), these daemons serve upload/download requests for specific chunks and interface with mounted storage drives.</li>
-              </ul>
-            </div>
-
-            {/* Section 2: Cryptographic Security & Redundancy */}
-            <div className="info-block">
-              <h3>2. Cryptography & 3x Redundancy</h3>
-              <p>
-                Security and durability are handled systematically at the client level:
-              </p>
-              <ul>
-                <li><strong>AES-GCM Encryption:</strong> Files are split into three equal chunks and encrypted in-browser using Web Crypto APIs. The Coordinator and storage nodes never receive unencrypted file contents or private decryption keys.</li>
-                <li><strong>Redundancy & Failover:</strong> Each encrypted chunk is replicated 3 times across separate node drives. If a drive fails or is unplugged, the Coordinator automatically redirects file requests to alternative active replicas.</li>
-                <li><strong>Auto-Healing Watchdogs:</strong> Storage nodes run automated local processes that monitor disk mount integrity and execute self-healing repairs (NTFS auto-repair) for filesystem consistency.</li>
-              </ul>
-            </div>
-
-            {/* Section 3: Data Access & OAuth Scopes (Required for Google Review) */}
+            {/* Section 1: What LockIn Does */}
             <div className="info-block full-width">
-              <h3>3. Data Privacy & Google OAuth Usage Policy</h3>
-              <p>
-                LockIn requests user authentication via Google OAuth. Here is the transparent breakdown of the data we collect and why we require it:
-              </p>
-              <table>
-                <thead>
-                  <tr>
-                    <th>Requested Scope / Data</th>
-                    <th>Exact Purpose & Application Functionality</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  <tr>
-                    <td><strong>Google Email Address</strong></td>
-                    <td>To create a unique account index, authorize file dashboard access, and enforce personal storage quotas (e.g., 1 GB allocation).</td>
-                  </tr>
-                  <tr>
-                    <td><strong>Full Name & Profile Image URL</strong></td>
-                    <td>To customize and personalize your session dashboard when logged into the client application.</td>
-                  </tr>
-                  <tr>
-                    <td><strong>OAuth OpenID Identifiers</strong></td>
-                    <td>To issue and validate signed session cookies (<code>dfs_session</code>) for secure coordinator API requests.</td>
-                  </tr>
-                </tbody>
-              </table>
-              <p className="privacy-assertion">
-                <strong>Data Protection Guarantee:</strong> LockIn is a private, zero-tracking application. We do not sell, distribute, share, or analyze your personal profile data. All metadata is stored locally within our private database.
-              </p>
+              <h3>What LockIn Does</h3>
+              <p>LockIn provides users with a zero-knowledge cloud storage environment. Files uploaded to LockIn are handled through a client-side architecture that splits, encrypts, and distributes data across a resilient storage node network.</p>
+              <ul>
+                <li><strong>Zero-Knowledge Encryption:</strong> Files are sliced into encrypted chunks directly within your web browser using client-side AES-GCM cryptography. Decryption keys remain local to your browser session; raw file contents are never transmitted in unencrypted form.</li>
+                <li><strong>Distributed & Self-Healing Architecture:</strong> Encrypted data chunks are stored across multiple distributed storage nodes. The system continuously monitors node health, automatically repairing corrupt drives and replicating chunks to maintain 3x data redundancy.</li>
+                <li><strong>Storage & Dashboard Management:</strong> Users can manage files, track personal storage quotas, and securely download or assemble encrypted file chunks back into original files directly from the web dashboard.</li>
+              </ul>
+            </div>
+
+            {/* Section 2: Google Data Usage */}
+            <div className="info-block full-width">
+              <h3>How LockIn Uses Google Data & Permissions</h3>
+              <p>LockIn requests authentication access through Google OAuth exclusively to verify user identity and manage secure account access.</p>
+              <ul>
+                <li><strong>Identity Verification:</strong> We use your Google primary profile information (such as your name and email address) to authenticate your login sessions securely.</li>
+                <li><strong>Access Control & Quota Management:</strong> Google account credentials are used to link your personal file tree and enforce individual storage quota allocations (e.g., 1 GB per user).</li>
+                <li><strong>Data Privacy:</strong> LockIn does not access, read, or store any extended user data from your Google Account beyond basic sign-in profile information. We do not share, sell, or analyze your user data for advertising or tracking purposes.</li>
+              </ul>
             </div>
           </div>
 
-          <div className="landing-legal-links">
-            <a href="/privacy.html" target="_blank" rel="noopener noreferrer">Privacy Policy</a>
-            <span className="divider">•</span>
-            <a href="/terms.html" target="_blank" rel="noopener noreferrer">Terms of Service</a>
+          <div className="info-footer-links">
+            <h3>Links & Resources</h3>
+            <div className="landing-legal-links">
+              <a href="/privacy.html" target="_blank" rel="noopener noreferrer">Privacy Policy</a>
+              <span className="divider">•</span>
+              <a href="/terms.html" target="_blank" rel="noopener noreferrer">Terms of Service</a>
+            </div>
           </div>
         </div>
       </div>
