@@ -74,7 +74,7 @@ export default function LoginPage() {
         {/* Bottom Container: Comprehensive System Documentation */}
         <div className="bottom-info-container">
           <div className="info-header">
-            <h2>Welcome to LockIn</h2>
+            <h2>About LockIn</h2>
             <p>LockIn is a secure, self-hosted Distributed File System (DFS) designed for private cloud storage, end-to-end encrypted file delivery, and resilient cluster data management.</p>
           </div>
 
