@@ -136,7 +136,7 @@ export default function UserDashboard() {
       <header className="user-header">
         <div className="header-logo">
           <div className="header-logo-icon">⬡</div>
-          <span>Lockin Storage</span>
+          <span>LockIn</span>
         </div>
 
         <div className="search-bar-wrap">
