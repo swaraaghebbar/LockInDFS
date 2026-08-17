@@ -30,7 +30,7 @@ export default function LoginPage() {
 
           {/* Detailed Functionality Explanation */}
           <div className="landing-section">
-            <h2>Core Functionality</h2>
+            <h2>Core Features</h2>
             <div className="landing-features-grid">
               <div className="landing-feature-card">
                 <span className="feature-icon-badge">🔒</span>
@@ -53,6 +53,44 @@ export default function LoginPage() {
                 <div>
                   <h3>Self-Healing Watchdog</h3>
                   <p>Node processes continuously monitor drive integrity and automatically run system tools to remount and repair corrupted filesystems on the fly.</p>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* System Architecture Workflow */}
+          <div className="landing-section workflow-section">
+            <h2>How LockIn Works</h2>
+            <div className="workflow-steps">
+              <div className="workflow-step">
+                <div className="step-number">1</div>
+                <div className="step-content">
+                  <h3>Client-Side Chunking & Encryption</h3>
+                  <p>When you select a file to upload, the LockIn client-side React application splits the file into 3 equal chunks. Each chunk is then securely encrypted using AES-GCM cryptography right inside your browser session.</p>
+                </div>
+              </div>
+
+              <div className="workflow-step">
+                <div className="step-number">2</div>
+                <div className="step-content">
+                  <h3>Metadata Coordination</h3>
+                  <p>The client application registers the file's layout, structure, and chunk identifiers with the central FastAPI Coordinator. The Coordinator manages the index metadata database but never has access to the raw file contents or decryption keys.</p>
+                </div>
+              </div>
+
+              <div className="workflow-step">
+                <div className="step-number">3</div>
+                <div className="step-content">
+                  <h3>Distributed Target Storage</h3>
+                  <p>The client uploads the encrypted chunks to designated Storage Nodes running on Raspberry Pi local partitions and connected USB drives. Each node serves as a standalone server managing its physical storage sector.</p>
+                </div>
+              </div>
+
+              <div className="workflow-step">
+                <div className="step-number">4</div>
+                <div className="step-content">
+                  <h3>Failover & Replication</h3>
+                  <p>To ensure high availability, the Coordinator ensures each chunk is replicated across 3 distinct physical disks. If any node or drive goes offline, the system seamlessly redirects file downloads to active replica locations.</p>
                 </div>
               </div>
             </div>
