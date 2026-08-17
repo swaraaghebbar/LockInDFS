@@ -15,7 +15,7 @@ export default function LoginPage() {
           <div className="login-card">
             <div className="login-brand">
               <div className="login-logo-hex">⬡</div>
-              <span className="login-brand-name">LOCKIN</span>
+              <span className="login-brand-name">LockIn</span>
             </div>
 
             <h1 className="login-title">
