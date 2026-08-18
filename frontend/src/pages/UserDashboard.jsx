@@ -37,21 +37,43 @@ function useCountUp(target, trigger) {
     setDisplayed(0);
     const id = setInterval(() => {
       current += 1;
-      // ease-out: jump to target faster as we approach the end
       const progress = current / steps;
       const value = Math.round(target * (1 - Math.pow(1 - progress, 2)));
       setDisplayed(Math.min(value, target));
       if (current >= steps) clearInterval(id);
     }, interval);
     return () => clearInterval(id);
-  }, [target, trigger]); // re-run when trigger changes (category switch)
+  }, [target, trigger]);
   return displayed;
+}
+
+/* ── Hover Preview Card overlay component ──────────────── */
+function HoverPreview({ file }) {
+  const filename = file.filename || '';
+  const ext = filename.split('.').pop()?.toLowerCase() || '';
+  const isImage = ['jpg', 'jpeg', 'png', 'gif', 'webp', 'svg'].includes(ext);
+  const previewUrl = getPreviewUrl(file.id);
+
+  return (
+    <div className="hover-preview-bubble">
+      {isImage ? (
+        <div className="hover-preview-media">
+          <img src={previewUrl} alt={filename} />
+        </div>
+      ) : (
+        <div className="hover-preview-icon-wrapper">
+          <div className="hover-preview-badge">{getTypeBadge(filename)}</div>
+          <div className="hover-preview-lbl">No thumbnail preview</div>
+        </div>
+      )}
+    </div>
+  );
 }
 
 /* ── Single File Row (list mode) ────────────────────── */
 function FileRow({ file, onSelect, onDelete, onDownload }) {
   return (
-    <div className="file-row" onClick={() => onSelect(file)}>
+    <div className="file-row has-hover-preview" onClick={() => onSelect(file)}>
       <div className="file-row-icon">{getTypeBadge(file.filename)}</div>
       <div className="file-row-info">
         <div className="file-row-name" title={file.filename}>{file.filename}</div>
@@ -62,6 +84,8 @@ function FileRow({ file, onSelect, onDelete, onDownload }) {
         <button className="file-action-btn" title="Download" onClick={() => onDownload(file)}>↓</button>
         <button className="file-action-btn danger" title="Delete" onClick={() => onDelete(file)}>✕</button>
       </div>
+      {/* Floating Hover Preview */}
+      <HoverPreview file={file} />
     </div>
   );
 }
@@ -69,7 +93,7 @@ function FileRow({ file, onSelect, onDelete, onDownload }) {
 /* ── Single File Card (grid mode) ───────────────────── */
 function FileCard({ file, onSelect, onDelete, onDownload }) {
   return (
-    <div className="file-card" onClick={() => onSelect(file)}>
+    <div className="file-card has-hover-preview" onClick={() => onSelect(file)}>
       <div className="file-card-icon">{getTypeBadge(file.filename)}</div>
       <div className="file-card-name" title={file.filename}>{file.filename}</div>
       <div className="file-card-meta">{formatBytes(file.size)} · {formatRelTime(file.created_at)}</div>
@@ -77,11 +101,13 @@ function FileCard({ file, onSelect, onDelete, onDownload }) {
         <button className="file-action-btn" title="Download" onClick={() => onDownload(file)}>↓</button>
         <button className="file-action-btn danger" title="Delete" onClick={() => onDelete(file)}>✕</button>
       </div>
+      {/* Floating Hover Preview */}
+      <HoverPreview file={file} />
     </div>
   );
 }
 
-/* ── List/Grid toggle icons ──────────────────────────── */
+/* ── List/Grid toggle icons (Identical pill shaped buttons) ── */
 function ListIcon() {
   return (
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" width="14" height="14">
@@ -249,11 +275,8 @@ export default function UserDashboard() {
   const storageColor = getStorageColor(quotaPct);
   const freeBytes = Math.max(0, quotaBytes - usedBytes);
   const storageDots = [
-    // dot 1 — always lit, colour = overall health
     { lit: true,  color: storageColor, tip: `${quotaPct}% used — ${formatBytes(freeBytes)} free` },
-    // dot 2 — lit if < 85% used
     { lit: quotaPct < 85,  color: quotaPct < 85  ? storageColor : 'dim', tip: quotaPct < 85  ? 'Plenty of space remaining' : 'Almost full' },
-    // dot 3 — lit only if < 60% used (comfortable zone)
     { lit: quotaPct < 60,  color: quotaPct < 60  ? 'green' : 'dim',      tip: quotaPct < 60  ? 'Storage healthy' : 'Storage above 60%' },
   ];
 
@@ -333,7 +356,6 @@ export default function UserDashboard() {
             <div className="files-panel-header">
               <div>
                 <div className="files-panel-title">{catLabel}</div>
-                {/* Animated count number */}
                 <div className="files-panel-count">
                   {loading ? '—' : animatedCount}
                 </div>
@@ -366,7 +388,6 @@ export default function UserDashboard() {
             {/* ── List view ── */}
             {viewMode === 'list' && (
               <div className="file-list">
-                {/* Uploading inline row */}
                 {uploading && (
                   <div className="file-row uploading-row" style={{ pointerEvents:'none', background:'rgba(255,75,53,0.04)', borderBottom:'1px solid rgba(255,75,53,0.12)' }}>
                     <div className="file-row-icon" style={{ color:'var(--accent)', borderColor:'rgba(255,75,53,0.22)' }}>UP</div>
@@ -456,7 +477,6 @@ export default function UserDashboard() {
         {/* Footer */}
         <footer className="dash-footer">
           <span className="dash-footer-tag">Stored across the LockIn network</span>
-          {/* Color-coded storage dots */}
           <div className="dash-footer-dots">
             {storageDots.map((dot, i) => (
               <div

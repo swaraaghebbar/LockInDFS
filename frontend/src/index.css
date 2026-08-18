@@ -810,21 +810,22 @@ input, textarea { font-family: inherit; }
   display: flex;
   background: rgba(255, 255, 255, 0.04);
   border: 1px solid rgba(255, 255, 255, 0.08);
-  border-radius: var(--radius-md);
-  padding: 2px;
+  border-radius: 99px; /* pill shape matching overall toggle design */
+  padding: 3px;
 }
 .view-toggle-btn {
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 28px;
-  height: 28px;
-  border-radius: 6px;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%; /* circular icon container inside the pill toggle */
   color: var(--text-muted);
   background: transparent;
   transition: all var(--t-fast);
   padding: 0;
   border: none;
+  cursor: pointer;
 }
 .view-toggle-btn:hover {
   color: var(--text-primary);
@@ -832,9 +833,77 @@ input, textarea { font-family: inherit; }
 }
 .view-toggle-btn.active {
   color: var(--text-primary);
-  background: rgba(255, 255, 255, 0.09);
+  background: rgba(255, 255, 255, 0.12);
   box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.1);
 }
+
+/* Hover Preview bubble styles */
+.has-hover-preview {
+  position: relative;
+}
+.hover-preview-bubble {
+  position: absolute;
+  bottom: 100%;
+  left: 50%;
+  transform: translateX(-50%) translateY(8px) scale(0.92);
+  background: rgba(20, 20, 20, 0.75);
+  backdrop-filter: blur(20px) saturate(140%);
+  -webkit-backdrop-filter: blur(20px) saturate(140%);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 12px;
+  padding: 6px;
+  pointer-events: none;
+  opacity: 0;
+  z-index: 200;
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.6);
+  transition: opacity 0.28s cubic-bezier(0.16, 1, 0.3, 1), 
+              transform 0.28s cubic-bezier(0.16, 1, 0.3, 1);
+  will-change: transform, opacity;
+  margin-bottom: 8px;
+}
+.has-hover-preview:hover .hover-preview-bubble {
+  opacity: 1;
+  transform: translateX(-50%) translateY(0) scale(1);
+}
+.hover-preview-media {
+  width: 140px;
+  height: 90px;
+  overflow: hidden;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #000;
+}
+.hover-preview-media img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.hover-preview-icon-wrapper {
+  width: 120px;
+  height: 80px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+.hover-preview-badge {
+  font-family: var(--font-mono);
+  font-size: 0.65rem;
+  font-weight: 700;
+  color: var(--text-muted);
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  padding: 4px 8px;
+  border-radius: 6px;
+}
+.hover-preview-lbl {
+  font-size: 0.65rem;
+  color: var(--text-muted);
+}
+
 
 /* File Grid View */
 .file-grid {
