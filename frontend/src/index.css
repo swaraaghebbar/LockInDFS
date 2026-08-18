@@ -1411,68 +1411,84 @@ input, textarea { font-family: inherit; }
   .dash-quota-wrap { display: none; }
 }
 
-/* ── Floating File Category Bar ── */
+/* ── Floating File Category Bar — wide flat dock ── */
 .floating-category-bar {
   position: fixed;
   bottom: 24px;
   left: 50%;
   transform: translateX(-50%);
-  z-index: 100;
-  display: grid;
-  grid-template-columns: repeat(5, 42px);
-  gap: 6px;
-  padding: 5px;
-  background: rgba(20, 20, 20, 0.45);
-  backdrop-filter: blur(24px) saturate(150%);
-  -webkit-backdrop-filter: blur(24px) saturate(150%);
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  z-index: 200;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 8px 16px;
+  width: min(760px, 90vw);
+  height: 62px;
+  background: rgba(20, 20, 20, 0.50);
+  backdrop-filter: blur(28px) saturate(160%);
+  -webkit-backdrop-filter: blur(28px) saturate(160%);
+  border: 1px solid rgba(255, 255, 255, 0.09);
   border-radius: 99px;
   box-shadow: 
     0 4px 12px rgba(0, 0, 0, 0.6), 
-    0 16px 40px rgba(0, 0, 0, 0.5),
-    inset 0 1px 0px rgba(255, 255, 255, 0.12);
+    0 16px 48px rgba(0, 0, 0, 0.55),
+    inset 0 1px 0px rgba(255, 255, 255, 0.13);
   transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 .floating-category-bar:hover {
-  border-color: rgba(255, 255, 255, 0.14);
+  border-color: rgba(255, 255, 255, 0.15);
   box-shadow: 
     0 6px 16px rgba(0, 0, 0, 0.7), 
-    0 20px 48px rgba(0, 0, 0, 0.6),
-    inset 0 1px 0px rgba(255, 255, 255, 0.2);
+    0 24px 56px rgba(0, 0, 0, 0.6),
+    inset 0 1px 0px rgba(255, 255, 255, 0.20);
 }
 
 .category-item {
+  flex: 1;
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 42px;
-  height: 42px;
-  padding: 0;
-  border-radius: 50%;
+  gap: 8px;
+  height: 46px;
+  padding: 0 12px;
+  border-radius: 99px;
   color: var(--text-secondary);
+  font-size: 0.72rem;
+  font-weight: 500;
+  letter-spacing: 0.02em;
   transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
   position: relative;
   background: transparent;
   border: 1px solid transparent;
+  white-space: nowrap;
+}
+
+.category-label {
+  font-size: 0.72rem;
+  font-weight: 500;
+  letter-spacing: 0.02em;
+  color: inherit;
+  white-space: nowrap;
 }
 
 .cat-svg {
-  width: 16px;
-  height: 16px;
+  width: 15px;
+  height: 15px;
   stroke: currentColor;
-  transition: transform 0.25s ease, stroke var(--t-fast);
+  flex-shrink: 0;
+  transition: transform 0.25s ease;
 }
 
-/* Hover effects */
+/* Hover */
 .category-item:hover {
   color: var(--text-primary);
-  transform: translateY(-4px) scale(1.03);
-  background: rgba(255, 255, 255, 0.06);
-  border-color: rgba(255, 255, 255, 0.1);
+  transform: translateY(-3px) scale(1.02);
+  background: rgba(255, 255, 255, 0.07);
+  border-color: rgba(255, 255, 255, 0.12);
   box-shadow: 
     0 4px 12px rgba(0,0,0,0.3),
-    inset 0 1px 0 rgba(255,255,255,0.08);
+    inset 0 1px 0 rgba(255,255,255,0.09);
 }
 .category-item:hover .cat-svg {
   transform: scale(1.1) translateY(-1px);
