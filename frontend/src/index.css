@@ -976,6 +976,10 @@ input, textarea { font-family: inherit; }
   z-index: 5;
   opacity: 0;
   pointer-events: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
   transition: width 0.4s cubic-bezier(0.16, 1, 0.3, 1),
               height 0.4s cubic-bezier(0.16, 1, 0.3, 1),
               border-radius 0.4s cubic-bezier(0.16, 1, 0.3, 1),
@@ -985,8 +989,47 @@ input, textarea { font-family: inherit; }
   opacity: 1;
   width: 100%;
   height: 100%;
-  border-radius: 0; /* completely fills the parent card card boundary */
+  border-radius: 0; /* completely fills the parent card boundary */
 }
+.card-inline-preview img {
+  width: 100% !important;
+  height: 100% !important;
+  object-fit: cover !important;
+}
+
+/* Document specific preview layout */
+.doc-preview-card {
+  background: rgba(30, 30, 30, 0.95);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 12px;
+}
+.doc-preview-text-box {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  text-align: center;
+}
+.doc-preview-ext {
+  font-family: var(--font-mono);
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: var(--accent);
+  background: rgba(255, 75, 53, 0.08);
+  border: 1px solid rgba(255, 75, 53, 0.2);
+  padding: 4px 10px;
+  border-radius: 6px;
+}
+.doc-preview-name {
+  font-size: 0.72rem;
+  color: var(--text-secondary);
+  word-break: break-all;
+  max-width: 90%;
+}
+
 
 .file-card-name {
   font-size: 0.8rem;

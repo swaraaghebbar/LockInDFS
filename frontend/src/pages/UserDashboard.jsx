@@ -46,7 +46,6 @@ function FileTypeIcon({ filename }) {
       </svg>
     );
   }
-  // Miscellaneous
   return (
     <svg className="file-type-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" width="16" height="16">
       <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z" />
@@ -78,19 +77,37 @@ function useCountUp(target, trigger) {
   return displayed;
 }
 
-/* ── Inline Image Hover Preview overlay component ───────── */
-function InlineImagePreview({ file }) {
+/* ── Unified Image & Document Inline Hover Preview ─────── */
+function InlinePreview({ file }) {
   const filename = file.filename || '';
   const ext = filename.split('.').pop()?.toLowerCase() || '';
   const isImage = ['jpg', 'jpeg', 'png', 'gif', 'webp', 'svg'].includes(ext);
+  const isDoc = ['pdf', 'doc', 'docx', 'txt', 'md', 'csv', 'xls', 'xlsx'].includes(ext);
   const previewUrl = getPreviewUrl(file.id);
 
-  if (!isImage) return null;
-  return (
-    <div className="card-inline-preview">
-      <img src={previewUrl} alt={filename} />
-    </div>
-  );
+  if (isImage) {
+    return (
+      <div className="card-inline-preview">
+        <img src={previewUrl} alt={filename} />
+      </div>
+    );
+  }
+  if (isDoc) {
+    return (
+      <div className="card-inline-preview doc-preview-card">
+        {/* Render PDF in iframe, or file details if text/doc */}
+        {ext === 'pdf' ? (
+          <iframe src={previewUrl} title={filename} scroll="no" style={{ pointerEvents: 'none', border: 'none', width: '100%', height: '100%', overflow: 'hidden' }} />
+        ) : (
+          <div className="doc-preview-text-box">
+            <span className="doc-preview-ext">.{ext.toUpperCase()}</span>
+            <span className="doc-preview-name">{filename.slice(0, 20)}</span>
+          </div>
+        )}
+      </div>
+    );
+  }
+  return null;
 }
 
 /* ── Single File Row (list mode) ────────────────────── */
@@ -101,7 +118,7 @@ function FileRow({ file, onSelect, onDelete, onDownload }) {
         <div className="file-row-icon">
           <FileTypeIcon filename={file.filename} />
         </div>
-        <InlineImagePreview file={file} />
+        <InlinePreview file={file} />
       </div>
       <div className="file-row-info">
         <div className="file-row-name" title={file.filename}>{file.filename}</div>
@@ -124,7 +141,7 @@ function FileCard({ file, onSelect, onDelete, onDownload }) {
         <div className="file-card-icon">
           <FileTypeIcon filename={file.filename} />
         </div>
-        <InlineImagePreview file={file} />
+        <InlinePreview file={file} />
       </div>
       <div className="file-card-name" title={file.filename}>{file.filename}</div>
       <div className="file-card-meta">{formatBytes(file.size)} · {formatRelTime(file.created_at)}</div>
@@ -177,8 +194,8 @@ export default function UserDashboard() {
   const [confirmDelete, setConfirmDelete] = useState(null);
   const [toasts, setToasts] = useState([]);
   const [activeCategory, setActiveCategory] = useState('all');
-  const [animKey, setAnimKey] = useState(0);          // triggers macOS re-enter animation + count-up
-  const [viewMode, setViewMode] = useState('list');   // 'list' | 'grid'
+  const [animKey, setAnimKey] = useState(0);
+  const [viewMode, setViewMode] = useState('list');
   const [uploading, setUploading] = useState(false);
   const [uploadingName, setUploadingName] = useState('');
   const [dragging, setDragging] = useState(false);
@@ -293,7 +310,7 @@ export default function UserDashboard() {
     return result.filter(f => f.filename.toLowerCase().includes(q) || f.id.toLowerCase().includes(q));
   }, [files, searchQuery, activeCategory]);
 
-  /* ── Animated count — resets on every category change ── */
+  /* ── Animated count ── */
   const animatedCount = useCountUp(loading ? 0 : filteredFiles.length, animKey);
 
   const usedBytes = user?.storage_used || 0;
@@ -380,7 +397,7 @@ export default function UserDashboard() {
 
         {/* Main body */}
         <div className="dash-body">
-          {/* macOS-animated screen — key forces re-mount on category change */}
+          {/* macOS-animated screen */}
           <div key={animKey} className="files-panel mac-enter">
             <div className="files-panel-header">
               <div>
