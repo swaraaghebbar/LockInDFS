@@ -719,7 +719,7 @@ input, textarea { font-family: inherit; }
 .file-row:hover { background: rgba(255,255,255,0.03); }
 
 .file-row-icon {
-  width: 32px; height: 32px;
+  width: 100%; height: 100%;
   background: rgba(255,255,255,0.05);
   border: 1px solid var(--border);
   border-radius: 8px;
@@ -837,72 +837,77 @@ input, textarea { font-family: inherit; }
   box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.1);
 }
 
-/* Hover Preview bubble styles */
-.has-hover-preview {
+/* Custom file type icon SVG alignment */
+.file-type-svg {
+  stroke-width: 1.5px;
+  color: var(--text-muted);
+  transition: color var(--t-fast);
+}
+.file-row:hover .file-type-svg,
+.file-card:hover .file-type-svg {
+  color: var(--text-primary);
+}
+
+/* File Icon / Image Hover Preview Wrapper */
+.file-row-icon-wrap {
+  width: 32px;
+  height: 32px;
   position: relative;
+  flex-shrink: 0;
 }
-.hover-preview-bubble {
+.file-card-icon-wrap {
+  width: 44px;
+  height: 44px;
+  position: relative;
+  margin-bottom: 12px;
+}
+
+/* Base icon layers */
+.file-row-icon,
+.file-card-icon {
   position: absolute;
-  bottom: 100%;
-  left: 50%;
-  transform: translateX(-50%) translateY(8px) scale(0.92);
-  background: rgba(20, 20, 20, 0.75);
-  backdrop-filter: blur(20px) saturate(140%);
-  -webkit-backdrop-filter: blur(20px) saturate(140%);
-  border: 1px solid rgba(255, 255, 255, 0.12);
-  border-radius: 12px;
-  padding: 6px;
-  pointer-events: none;
-  opacity: 0;
-  z-index: 200;
-  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.6);
-  transition: opacity 0.28s cubic-bezier(0.16, 1, 0.3, 1), 
-              transform 0.28s cubic-bezier(0.16, 1, 0.3, 1);
-  will-change: transform, opacity;
-  margin-bottom: 8px;
+  inset: 0;
+  z-index: 1;
+  transition: opacity 0.3s ease, transform 0.3s ease;
+  margin: 0 !important; /* override outer margins */
 }
-.has-hover-preview:hover .hover-preview-bubble {
-  opacity: 1;
-  transform: translateX(-50%) translateY(0) scale(1);
-}
-.hover-preview-media {
-  width: 140px;
-  height: 90px;
-  overflow: hidden;
+
+/* Hover crossfade inline preview layout */
+.card-inline-preview {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
   border-radius: 8px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
+  overflow: hidden;
+  border: 1px solid rgba(255, 255, 255, 0.12);
   background: #000;
+  opacity: 0;
+  transform: scale(0.9);
+  pointer-events: none;
+  transition: opacity 0.32s cubic-bezier(0.16, 1, 0.3, 1),
+              transform 0.32s cubic-bezier(0.16, 1, 0.3, 1);
 }
-.hover-preview-media img {
+.file-card-icon-wrap .card-inline-preview {
+  border-radius: 10px;
+}
+.card-inline-preview img {
   width: 100%;
   height: 100%;
   object-fit: cover;
 }
-.hover-preview-icon-wrapper {
-  width: 120px;
-  height: 80px;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
+
+/* Hover state: crossfade the preview over the type icon snappy but elegantly */
+.file-row:hover .card-inline-preview,
+.file-card:hover .card-inline-preview {
+  opacity: 1;
+  transform: scale(1);
 }
-.hover-preview-badge {
-  font-family: var(--font-mono);
-  font-size: 0.65rem;
-  font-weight: 700;
-  color: var(--text-muted);
-  background: rgba(255, 255, 255, 0.05);
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  padding: 4px 8px;
-  border-radius: 6px;
+.file-row:hover .file-row-icon,
+.file-card:hover .file-card-icon {
+  opacity: 0;
+  transform: scale(0.85);
 }
-.hover-preview-lbl {
-  font-size: 0.65rem;
-  color: var(--text-muted);
-}
+
 
 
 /* File Grid View */
@@ -931,8 +936,8 @@ input, textarea { font-family: inherit; }
   transform: translateY(-2px);
 }
 .file-card-icon {
-  width: 44px;
-  height: 44px;
+  width: 100%;
+  height: 100%;
   background: rgba(255, 255, 255, 0.05);
   border: 1px solid rgba(255, 255, 255, 0.08);
   border-radius: 10px;
@@ -942,7 +947,6 @@ input, textarea { font-family: inherit; }
   color: var(--text-muted);
   font-family: var(--font-mono);
   font-weight: 600;
-  margin-bottom: 12px;
   transition: all var(--t-fast);
 }
 .file-card:hover .file-card-icon {

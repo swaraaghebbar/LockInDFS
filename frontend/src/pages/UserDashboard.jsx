@@ -12,17 +12,48 @@ const CATEGORIES = {
   misc:            { label: 'Miscellaneous',    exts: null /* catch-all */ },
 };
 
-/* ── File type badge helper ─────────────────────────── */
-function getTypeBadge(filename) {
+/* ── Render SVG icons identical to bottom bar categories ── */
+function FileTypeIcon({ filename }) {
   const ext = filename.split('.').pop()?.toLowerCase() || '';
-  if (['jpg','jpeg','png','gif','webp','svg'].includes(ext)) return 'IMG';
-  if (['mp4','webm','mov'].includes(ext)) return 'VID';
-  if (['mp3','wav','ogg','flac'].includes(ext)) return 'AUD';
-  if (ext === 'pdf') return 'PDF';
-  if (['zip','tar','gz','rar','7z'].includes(ext)) return 'ZIP';
-  if (['js','ts','jsx','tsx','py','go','rs','cpp','c','java'].includes(ext)) return 'CODE';
-  if (['md','txt','csv'].includes(ext)) return 'TXT';
-  return ext.slice(0,4).toUpperCase() || 'FILE';
+  const isPicVid = ['jpg','jpeg','png','gif','webp','svg','mp4','webm','mov'].includes(ext);
+  const isDocText = ['pdf','doc','docx','txt','md','csv','xls','xlsx'].includes(ext);
+  const isAudio = ['mp3','wav','ogg','flac'].includes(ext);
+
+  if (isPicVid) {
+    return (
+      <svg className="file-type-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" width="16" height="16">
+        <rect x="3" y="3" width="18" height="18" rx="3" />
+        <circle cx="8.5" cy="8.5" r="1.5" />
+        <path d="M21 15l-5-5L5 21" />
+      </svg>
+    );
+  }
+  if (isDocText) {
+    return (
+      <svg className="file-type-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" width="16" height="16">
+        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+        <polyline points="14 2 14 8 20 8" />
+        <line x1="16" y1="13" x2="8" y2="13" />
+        <line x1="16" y1="17" x2="8" y2="17" />
+      </svg>
+    );
+  }
+  if (isAudio) {
+    return (
+      <svg className="file-type-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" width="16" height="16">
+        <path d="M3 18v-6a9 9 0 0 1 18 0v6" />
+        <path d="M21 19a2 2 0 0 1-2 2h-1a2 2 0 0 1-2-2v-3a2 2 0 0 1 2-2h3zM3 19a2 2 0 0 0 2 2h1a2 2 0 0 0 2-2v-3a2 2 0 0 0-2-2H3z" />
+      </svg>
+    );
+  }
+  // Miscellaneous
+  return (
+    <svg className="file-type-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" width="16" height="16">
+      <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z" />
+      <polyline points="3.27 6.96 12 12.01 20.73 6.96" />
+      <line x1="12" y1="22.08" x2="12" y2="12" />
+    </svg>
+  );
 }
 
 /* ── Animated counter (0 → target) ─────────────────── */
@@ -30,8 +61,8 @@ function useCountUp(target, trigger) {
   const [displayed, setDisplayed] = useState(0);
   useEffect(() => {
     if (target === 0) { setDisplayed(0); return; }
-    const duration = 420;          // ms — short & snappy
-    const steps = Math.min(target, 28);  // max 28 ticks regardless of file count
+    const duration = 420;
+    const steps = Math.min(target, 28);
     const interval = duration / steps;
     let current = 0;
     setDisplayed(0);
@@ -47,25 +78,17 @@ function useCountUp(target, trigger) {
   return displayed;
 }
 
-/* ── Hover Preview Card overlay component ──────────────── */
-function HoverPreview({ file }) {
+/* ── Inline Image Hover Preview overlay component ───────── */
+function InlineImagePreview({ file }) {
   const filename = file.filename || '';
   const ext = filename.split('.').pop()?.toLowerCase() || '';
   const isImage = ['jpg', 'jpeg', 'png', 'gif', 'webp', 'svg'].includes(ext);
   const previewUrl = getPreviewUrl(file.id);
 
+  if (!isImage) return null;
   return (
-    <div className="hover-preview-bubble">
-      {isImage ? (
-        <div className="hover-preview-media">
-          <img src={previewUrl} alt={filename} />
-        </div>
-      ) : (
-        <div className="hover-preview-icon-wrapper">
-          <div className="hover-preview-badge">{getTypeBadge(filename)}</div>
-          <div className="hover-preview-lbl">No thumbnail preview</div>
-        </div>
-      )}
+    <div className="card-inline-preview">
+      <img src={previewUrl} alt={filename} />
     </div>
   );
 }
@@ -73,8 +96,13 @@ function HoverPreview({ file }) {
 /* ── Single File Row (list mode) ────────────────────── */
 function FileRow({ file, onSelect, onDelete, onDownload }) {
   return (
-    <div className="file-row has-hover-preview" onClick={() => onSelect(file)}>
-      <div className="file-row-icon">{getTypeBadge(file.filename)}</div>
+    <div className="file-row" onClick={() => onSelect(file)}>
+      <div className="file-row-icon-wrap">
+        <div className="file-row-icon">
+          <FileTypeIcon filename={file.filename} />
+        </div>
+        <InlineImagePreview file={file} />
+      </div>
       <div className="file-row-info">
         <div className="file-row-name" title={file.filename}>{file.filename}</div>
         <div className="file-row-meta">{formatRelTime(file.created_at)}</div>
@@ -84,8 +112,6 @@ function FileRow({ file, onSelect, onDelete, onDownload }) {
         <button className="file-action-btn" title="Download" onClick={() => onDownload(file)}>↓</button>
         <button className="file-action-btn danger" title="Delete" onClick={() => onDelete(file)}>✕</button>
       </div>
-      {/* Floating Hover Preview */}
-      <HoverPreview file={file} />
     </div>
   );
 }
@@ -93,16 +119,19 @@ function FileRow({ file, onSelect, onDelete, onDownload }) {
 /* ── Single File Card (grid mode) ───────────────────── */
 function FileCard({ file, onSelect, onDelete, onDownload }) {
   return (
-    <div className="file-card has-hover-preview" onClick={() => onSelect(file)}>
-      <div className="file-card-icon">{getTypeBadge(file.filename)}</div>
+    <div className="file-card" onClick={() => onSelect(file)}>
+      <div className="file-card-icon-wrap">
+        <div className="file-card-icon">
+          <FileTypeIcon filename={file.filename} />
+        </div>
+        <InlineImagePreview file={file} />
+      </div>
       <div className="file-card-name" title={file.filename}>{file.filename}</div>
       <div className="file-card-meta">{formatBytes(file.size)} · {formatRelTime(file.created_at)}</div>
       <div className="file-card-actions" onClick={e => e.stopPropagation()}>
         <button className="file-action-btn" title="Download" onClick={() => onDownload(file)}>↓</button>
         <button className="file-action-btn danger" title="Delete" onClick={() => onDelete(file)}>✕</button>
       </div>
-      {/* Floating Hover Preview */}
-      <HoverPreview file={file} />
     </div>
   );
 }
