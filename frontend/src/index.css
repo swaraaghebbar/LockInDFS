@@ -431,48 +431,72 @@ input, textarea { font-family: inherit; }
 /* ══════════════════════════════════════════════════════════════
    USER DASHBOARD — CINEMATIC FILE INTERFACE
 ══════════════════════════════════════════════════════════════ */
+
+/* ── macOS spring entrance animation ── */
+@keyframes macSpringIn {
+  0%   { opacity: 0; transform: scale(0.92) translateY(6px); }
+  60%  { opacity: 1; transform: scale(1.01) translateY(-1px); }
+  100% { opacity: 1; transform: scale(1) translateY(0); }
+}
+.mac-enter {
+  animation: macSpringIn 0.38s cubic-bezier(0.32, 0.72, 0, 1) both;
+  will-change: transform, opacity;
+}
+
 .dash-page {
   min-height: 100vh;
-  background: var(--bg-page);
+  position: relative;
   display: flex;
   flex-direction: column;
   align-items: center;
-  padding: 32px 20px 60px;
-}
-
-/* ── Dash App Container ── */
-.dash-container {
-  width: 100%;
-  max-width: 1200px;
-  background: var(--bg-surface);
-  border: 1px solid var(--border);
-  border-radius: var(--radius-xl);
-  box-shadow: var(--shadow-lg);
+  padding: 32px 20px 80px;
   overflow: hidden;
-  position: relative;
 }
 
-/* Background image inside dash container */
-.dash-bg {
-  position: absolute;
+/* Full-page mountain background (behind glass card) */
+.dash-page-bg {
+  position: fixed;
   inset: 0;
   background-image: url('/bg.jpg');
   background-size: cover;
   background-position: center bottom;
-  opacity: 0.30;
   z-index: 0;
   pointer-events: none;
 }
-.dash-bg::after {
+.dash-page::before {
   content: '';
-  position: absolute;
+  position: fixed;
   inset: 0;
-  background: linear-gradient(
-    to bottom,
-    #1d1d1d 0%,
-    rgba(29,29,29,0.88) 55%,
-    rgba(29,29,29,0.55) 100%
-  );
+  background: rgba(0, 0, 0, 0.65);
+  z-index: 1;
+  pointer-events: none;
+}
+
+/* ── Liquid Glass App Container ── */
+.dash-container {
+  width: 100%;
+  max-width: 1200px;
+  position: relative;
+  z-index: 2;
+  /* Liquid glass */
+  background: rgba(255, 255, 255, 0.05);
+  backdrop-filter: blur(32px) saturate(160%);
+  -webkit-backdrop-filter: blur(32px) saturate(160%);
+  border: 1px solid rgba(255, 255, 255, 0.10);
+  border-radius: var(--radius-xl);
+  box-shadow:
+    0 8px 32px rgba(0, 0, 0, 0.55),
+    0 32px 80px rgba(0, 0, 0, 0.4),
+    inset 0 1px 0 rgba(255, 255, 255, 0.12);
+  overflow: hidden;
+  transition: border-color 0.3s ease;
+}
+.dash-container.drag-over {
+  border-color: rgba(255, 75, 53, 0.5);
+  box-shadow:
+    0 8px 32px rgba(0, 0, 0, 0.55),
+    0 0 0 2px rgba(255, 75, 53, 0.25),
+    inset 0 1px 0 rgba(255, 255, 255, 0.12);
 }
 
 /* ── Dash Header ── */
@@ -481,9 +505,10 @@ input, textarea { font-family: inherit; }
   z-index: 2;
   display: flex;
   align-items: center;
-  gap: 20px;
+  gap: 16px;
   padding: 22px 36px;
-  border-bottom: 1px solid var(--border);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.07);
+  background: rgba(0, 0, 0, 0.15);
 }
 .dash-wordmark {
   font-size: 0.82rem;
@@ -502,10 +527,16 @@ input, textarea { font-family: inherit; }
   background: var(--accent);
 }
 
-/* search */
+/* search area — search + all-files pill grouped */
+.dash-search-area {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex: 1;
+  max-width: 460px;
+}
 .dash-search-wrap {
   flex: 1;
-  max-width: 380px;
   position: relative;
   display: flex;
   align-items: center;
@@ -519,8 +550,8 @@ input, textarea { font-family: inherit; }
 }
 .dash-search-input {
   width: 100%;
-  background: rgba(255,255,255,0.05);
-  border: 1px solid var(--border);
+  background: rgba(255,255,255,0.06);
+  border: 1px solid rgba(255,255,255,0.08);
   border-radius: 99px;
   padding: 7px 14px 7px 34px;
   font-size: 0.81rem;
@@ -530,8 +561,8 @@ input, textarea { font-family: inherit; }
 }
 .dash-search-input::placeholder { color: var(--text-muted); }
 .dash-search-input:focus {
-  border-color: var(--border-bright);
-  background: rgba(255,255,255,0.08);
+  border-color: rgba(255,255,255,0.18);
+  background: rgba(255,255,255,0.09);
 }
 .dash-search-clear {
   position: absolute;
@@ -541,6 +572,35 @@ input, textarea { font-family: inherit; }
   transition: color var(--t-fast);
 }
 .dash-search-clear:hover { color: var(--text-secondary); }
+
+/* All Files button */
+.all-files-btn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 13px;
+  border-radius: 99px;
+  border: 1px solid rgba(255,255,255,0.10);
+  background: rgba(255,255,255,0.05);
+  color: var(--text-muted);
+  font-size: 0.74rem;
+  font-weight: 500;
+  letter-spacing: 0.02em;
+  white-space: nowrap;
+  flex-shrink: 0;
+  transition: all 0.22s cubic-bezier(0.16,1,0.3,1);
+}
+.all-files-btn:hover {
+  color: var(--text-primary);
+  border-color: rgba(255,255,255,0.18);
+  background: rgba(255,255,255,0.09);
+}
+.all-files-btn.active {
+  color: var(--text-primary);
+  border-color: rgba(255,255,255,0.22);
+  background: rgba(255,255,255,0.12);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.15);
+}
 
 /* header right side */
 .dash-header-right {
@@ -563,7 +623,7 @@ input, textarea { font-family: inherit; }
 }
 .dash-quota-track {
   width: 80px; height: 2px;
-  background: rgba(255,255,255,0.1);
+  background: rgba(255,255,255,0.08);
   border-radius: 1px;
   overflow: hidden;
 }
@@ -576,7 +636,7 @@ input, textarea { font-family: inherit; }
 .dash-avatar {
   width: 30px; height: 30px;
   border-radius: 50%;
-  border: 1px solid var(--border-bright);
+  border: 1px solid rgba(255,255,255,0.14);
   object-fit: cover;
 }
 .dash-signout-btn {
@@ -585,19 +645,20 @@ input, textarea { font-family: inherit; }
   letter-spacing: 0.06em;
   text-transform: uppercase;
   padding: 5px 12px;
-  border: 1px solid var(--border);
+  border: 1px solid rgba(255,255,255,0.08);
   border-radius: 99px;
   transition: color var(--t-fast), border-color var(--t-fast), background var(--t-fast);
 }
 .dash-signout-btn:hover {
   color: var(--text-primary);
-  border-color: var(--border-bright);
-  background: rgba(255,255,255,0.05);
+  border-color: rgba(255,255,255,0.18);
+  background: rgba(255,255,255,0.06);
 }
 
 /* ── Dash Main Body ── */
 .dash-body {
   position: relative;
+
   z-index: 2;
   display: block;
   min-height: 520px;
@@ -962,7 +1023,8 @@ input, textarea { font-family: inherit; }
   position: relative;
   z-index: 2;
   padding: 16px 36px;
-  border-top: 1px solid var(--border);
+  border-top: 1px solid rgba(255, 255, 255, 0.06);
+  background: rgba(0, 0, 0, 0.10);
   display: flex;
   align-items: center;
   justify-content: space-between;

@@ -3,6 +3,15 @@ import { useAuth } from '../AuthContext.jsx';
 import { fetchFiles, downloadFile, deleteFile, formatBytes, formatRelTime, getPreviewUrl, uploadFile } from '../api.js';
 import FilePreviewModal from '../components/FilePreviewModal.jsx';
 
+/* ── Category metadata ───────────────────────────────── */
+const CATEGORIES = {
+  all:             { label: 'All Files',        exts: null },
+  pictures_video:  { label: 'Pictures & Video', exts: ['jpg','jpeg','png','gif','webp','svg','mp4','webm','mov'] },
+  documents_text:  { label: 'Documents',        exts: ['pdf','doc','docx','txt','md','csv','xls','xlsx'] },
+  audio:           { label: 'Audio',            exts: ['mp3','wav','ogg','flac'] },
+  misc:            { label: 'Miscellaneous',    exts: null /* catch-all */ },
+};
+
 /* ── File type badge helper ─────────────────────────── */
 function getTypeBadge(filename) {
   const ext = filename.split('.').pop()?.toLowerCase() || '';
@@ -27,16 +36,8 @@ function FileRow({ file, onSelect, onDelete, onDownload }) {
       </div>
       <div className="file-row-size">{formatBytes(file.size)}</div>
       <div className="file-row-actions" onClick={e => e.stopPropagation()}>
-        <button
-          className="file-action-btn"
-          title="Download"
-          onClick={() => onDownload(file)}
-        >↓</button>
-        <button
-          className="file-action-btn danger"
-          title="Delete"
-          onClick={() => onDelete(file)}
-        >✕</button>
+        <button className="file-action-btn" title="Download" onClick={() => onDownload(file)}>↓</button>
+        <button className="file-action-btn danger" title="Delete" onClick={() => onDelete(file)}>✕</button>
       </div>
     </div>
   );
@@ -52,12 +53,19 @@ export default function UserDashboard() {
   const [confirmDelete, setConfirmDelete] = useState(null);
   const [toasts, setToasts] = useState([]);
   const [activeCategory, setActiveCategory] = useState('all');
+  const [animKey, setAnimKey] = useState(0);          // triggers macOS re-enter animation
   const [uploading, setUploading] = useState(false);
   const [uploadingName, setUploadingName] = useState('');
   const [dragging, setDragging] = useState(false);
 
   const hiddenInputRef = useRef(null);
   const uploadTriggerRef = useRef(null);
+
+  /* ── change category with animation ── */
+  const changeCategory = useCallback((cat) => {
+    setActiveCategory(cat);
+    setAnimKey(k => k + 1);  // force re-mount → entrance animation
+  }, []);
 
   const addToast = useCallback((message, type = 'success') => {
     const id = Date.now();
@@ -98,20 +106,14 @@ export default function UserDashboard() {
 
   const handleFileSelect = (e) => {
     const file = e.target.files?.[0];
-    if (file) {
-      handleUploadFile(file);
-    }
+    if (file) handleUploadFile(file);
   };
 
   useEffect(() => {
     uploadTriggerRef.current = () => {
-      if (!uploading) {
-        hiddenInputRef.current?.click();
-      }
+      if (!uploading) hiddenInputRef.current?.click();
     };
-    return () => {
-      uploadTriggerRef.current = null;
-    };
+    return () => { uploadTriggerRef.current = null; };
   }, [uploading]);
 
   const handleDeleteConfirmed = async () => {
@@ -137,34 +139,23 @@ export default function UserDashboard() {
     }
   };
 
-  const handleDragOver = (e) => {
-    e.preventDefault();
-    setDragging(true);
-  };
-
-  const handleDragLeave = () => {
-    setDragging(false);
-  };
-
+  const handleDragOver = (e) => { e.preventDefault(); setDragging(true); };
+  const handleDragLeave = () => { setDragging(false); };
   const handleDrop = (e) => {
     e.preventDefault();
     setDragging(false);
     const file = e.dataTransfer.files?.[0];
-    if (file) {
-      handleUploadFile(file);
-    }
+    if (file) handleUploadFile(file);
   };
 
   const filteredFiles = useMemo(() => {
     let result = files;
-
     if (activeCategory !== 'all') {
       result = result.filter(file => {
         const ext = file.filename.split('.').pop()?.toLowerCase() || '';
         const isPicVid = ['jpg','jpeg','png','gif','webp','svg','mp4','webm','mov'].includes(ext);
         const isDocText = ['pdf','doc','docx','txt','md','csv','xls','xlsx'].includes(ext);
         const isAudio = ['mp3','wav','ogg','flac'].includes(ext);
-
         if (activeCategory === 'pictures_video') return isPicVid;
         if (activeCategory === 'documents_text') return isDocText;
         if (activeCategory === 'audio') return isAudio;
@@ -172,38 +163,32 @@ export default function UserDashboard() {
         return true;
       });
     }
-
     if (!searchQuery.trim()) return result;
     const q = searchQuery.toLowerCase();
-    return result.filter(
-      f => f.filename.toLowerCase().includes(q) || f.id.toLowerCase().includes(q)
-    );
+    return result.filter(f => f.filename.toLowerCase().includes(q) || f.id.toLowerCase().includes(q));
   }, [files, searchQuery, activeCategory]);
 
   const usedBytes = user?.storage_used || 0;
   const quotaBytes = user?.storage_quota || (1024 * 1024 * 1024);
   const quotaPct = Math.min(100, Math.round((usedBytes / quotaBytes) * 100));
 
+  const catLabel = CATEGORIES[activeCategory]?.label ?? 'All Files';
+
   return (
     <div className="dash-page">
       {/* Hidden file input */}
-      <input
-        ref={hiddenInputRef}
-        type="file"
-        onChange={handleFileSelect}
-        style={{ display: 'none' }}
-      />
+      <input ref={hiddenInputRef} type="file" onChange={handleFileSelect} style={{ display: 'none' }} />
 
-      {/* ── App Container ── */}
+      {/* Full-page bg (visible through glass container) */}
+      <div className="dash-page-bg" />
+
+      {/* ── Glass App Container ── */}
       <div
-        className={`dash-container ${dragging ? 'drag-over' : ''}`}
+        className={`dash-container${dragging ? ' drag-over' : ''}`}
         onDragOver={handleDragOver}
         onDragLeave={handleDragLeave}
         onDrop={handleDrop}
       >
-        {/* Cinematic background */}
-        <div className="dash-bg" />
-
         {/* Header */}
         <header className="dash-header">
           <div className="dash-wordmark">
@@ -211,66 +196,74 @@ export default function UserDashboard() {
             LOCKIN
           </div>
 
-          {/* Search */}
-          <div className="dash-search-wrap">
-            <span className="dash-search-icon">⌕</span>
-            <input
-              type="text"
-              className="dash-search-input"
-              placeholder="Search files…"
-              value={searchQuery}
-              onChange={e => setSearchQuery(e.target.value)}
-            />
-            {searchQuery && (
-              <button className="dash-search-clear" onClick={() => setSearchQuery('')}>✕</button>
-            )}
+          {/* Search + All Files pill */}
+          <div className="dash-search-area">
+            <div className="dash-search-wrap">
+              <span className="dash-search-icon">⌕</span>
+              <input
+                type="text"
+                className="dash-search-input"
+                placeholder="Search files…"
+                value={searchQuery}
+                onChange={e => setSearchQuery(e.target.value)}
+              />
+              {searchQuery && (
+                <button className="dash-search-clear" onClick={() => setSearchQuery('')}>✕</button>
+              )}
+            </div>
+
+            {/* All Files button */}
+            <button
+              className={`all-files-btn${activeCategory === 'all' ? ' active' : ''}`}
+              onClick={() => changeCategory('all')}
+              title="Show all files"
+            >
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" width="13" height="13">
+                <rect x="3" y="3" width="7" height="7" rx="1.5"/>
+                <rect x="14" y="3" width="7" height="7" rx="1.5"/>
+                <rect x="3" y="14" width="7" height="7" rx="1.5"/>
+                <rect x="14" y="14" width="7" height="7" rx="1.5"/>
+              </svg>
+              All Files
+            </button>
           </div>
 
           {/* Right side */}
           <div className="dash-header-right">
             <div className="dash-quota-wrap">
-              <div className="dash-quota-text">
-                {formatBytes(usedBytes)} / {formatBytes(quotaBytes)}
-              </div>
+              <div className="dash-quota-text">{formatBytes(usedBytes)} / {formatBytes(quotaBytes)}</div>
               <div className="dash-quota-track">
                 <div className="dash-quota-fill" style={{ width: `${quotaPct}%` }} />
               </div>
             </div>
-            <img
-              src={user?.picture}
-              alt={user?.name}
-              className="dash-avatar"
-              title={user?.name}
-            />
+            <img src={user?.picture} alt={user?.name} className="dash-avatar" title={user?.name} />
             <button className="dash-signout-btn" onClick={logout}>Sign out</button>
           </div>
         </header>
 
-        {/* Main body — single files panel */}
+        {/* Main body */}
         <div className="dash-body">
-          {/* Files Panel */}
-          <div className="files-panel">
+          {/* macOS-animated screen — key forces re-mount on category change */}
+          <div key={animKey} className="files-panel mac-enter">
             <div className="files-panel-header">
               <div>
-                <div className="files-panel-title">Your Files</div>
+                <div className="files-panel-title">{catLabel}</div>
                 <div className="files-panel-count">{filteredFiles.length}</div>
                 <div className="files-panel-subcount">
-                  {searchQuery
-                    ? `matching "${searchQuery}"`
-                    : 'stored securely'}
+                  {searchQuery ? `matching "${searchQuery}"` : 'stored securely'}
                 </div>
               </div>
             </div>
 
             <div className="file-list">
-              {/* Uploading progress inline row */}
+              {/* Uploading inline row */}
               {uploading && (
-                <div className="file-row uploading-row" style={{ pointerEvents: 'none', background: 'rgba(255,75,53,0.04)', borderBottom: '1px solid rgba(255,75,53,0.12)' }}>
-                  <div className="file-row-icon" style={{ color: 'var(--accent)', borderColor: 'rgba(255,75,53,0.22)' }}>UP</div>
+                <div className="file-row uploading-row" style={{ pointerEvents:'none', background:'rgba(255,75,53,0.04)', borderBottom:'1px solid rgba(255,75,53,0.12)' }}>
+                  <div className="file-row-icon" style={{ color:'var(--accent)', borderColor:'rgba(255,75,53,0.22)' }}>UP</div>
                   <div className="file-row-info" style={{ flex: 1 }}>
-                    <div className="file-row-name" style={{ color: 'var(--accent)', fontWeight: 500 }}>Encrypting &amp; distributing {uploadingName}…</div>
-                    <div className="upload-progress-bar-track" style={{ height: 2, background: 'rgba(255,255,255,0.06)', borderRadius: 1, overflow: 'hidden', marginTop: 4 }}>
-                      <div className="upload-progress-bar-fill" style={{ height: '100%', background: 'var(--accent)', animation: 'progressPulse 1.2s ease-in-out infinite' }} />
+                    <div className="file-row-name" style={{ color:'var(--accent)', fontWeight:500 }}>Encrypting &amp; distributing {uploadingName}…</div>
+                    <div className="upload-progress-bar-track" style={{ height:2, background:'rgba(255,255,255,0.06)', borderRadius:1, overflow:'hidden', marginTop:4 }}>
+                      <div className="upload-progress-bar-fill" style={{ height:'100%', background:'var(--accent)', animation:'progressPulse 1.2s ease-in-out infinite' }} />
                     </div>
                   </div>
                 </div>
@@ -279,19 +272,23 @@ export default function UserDashboard() {
               {loading ? (
                 [1,2,3,4,5].map(i => (
                   <div key={i} className="file-row-skeleton">
-                    <div className="skeleton-box" style={{ width: 32, height: 32, borderRadius: 8, flexShrink: 0 }} />
-                    <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 5 }}>
-                      <div className="skeleton-box" style={{ height: 12, width: '60%' }} />
-                      <div className="skeleton-box" style={{ height: 10, width: '35%' }} />
+                    <div className="skeleton-box" style={{ width:32, height:32, borderRadius:8, flexShrink:0 }} />
+                    <div style={{ flex:1, display:'flex', flexDirection:'column', gap:5 }}>
+                      <div className="skeleton-box" style={{ height:12, width:'60%' }} />
+                      <div className="skeleton-box" style={{ height:10, width:'35%' }} />
                     </div>
-                    <div className="skeleton-box" style={{ width: 48, height: 10 }} />
+                    <div className="skeleton-box" style={{ width:48, height:10 }} />
                   </div>
                 ))
               ) : filteredFiles.length === 0 ? (
                 <div className="files-empty">
                   <div className="files-empty-icon">⬡</div>
                   <div className="files-empty-text">
-                    {searchQuery ? 'No files match your search' : 'No files uploaded yet. Drag anywhere here to upload.'}
+                    {searchQuery
+                      ? `No ${catLabel.toLowerCase()} match your search`
+                      : activeCategory === 'all'
+                        ? 'No files yet — drag anywhere to upload'
+                        : `No ${catLabel.toLowerCase()} stored`}
                   </div>
                 </div>
               ) : (
@@ -311,9 +308,7 @@ export default function UserDashboard() {
 
         {/* Footer */}
         <footer className="dash-footer">
-          <span className="dash-footer-tag">
-            Stored across the LockIn network
-          </span>
+          <span className="dash-footer-tag">Stored across the LockIn network</span>
           <div className="dash-footer-dots">
             <div className="dash-footer-dot active" title="Coordinator online" />
             <div className="dash-footer-dot active" title="Node cluster" />
@@ -324,11 +319,7 @@ export default function UserDashboard() {
 
       {/* ── File Preview Modal ── */}
       {selectedFile && (
-        <FilePreviewModal
-          file={selectedFile}
-          onClose={() => setSelectedFile(null)}
-          addToast={addToast}
-        />
+        <FilePreviewModal file={selectedFile} onClose={() => setSelectedFile(null)} addToast={addToast} />
       )}
 
       {/* ── Confirm Delete Modal ── */}
@@ -336,9 +327,7 @@ export default function UserDashboard() {
         <div className="overlay" onClick={() => setConfirmDelete(null)}>
           <div className="modal" onClick={e => e.stopPropagation()}>
             <div className="modal-title">Delete "{confirmDelete.filename}"?</div>
-            <div className="modal-body">
-              This file will be permanently removed from the distributed cluster.
-            </div>
+            <div className="modal-body">This file will be permanently removed from the distributed cluster.</div>
             <div className="modal-actions">
               <button className="btn-ghost" onClick={() => setConfirmDelete(null)}>Cancel</button>
               <button className="btn-danger" onClick={handleDeleteConfirmed}>Delete</button>
@@ -358,7 +347,7 @@ export default function UserDashboard() {
       <div className="floating-category-bar">
         <button
           className={`category-item ${activeCategory === 'pictures_video' ? 'active' : ''}`}
-          onClick={() => setActiveCategory(prev => prev === 'pictures_video' ? 'all' : 'pictures_video')}
+          onClick={() => changeCategory(activeCategory === 'pictures_video' ? 'all' : 'pictures_video')}
           title="Pictures / Video"
         >
           <svg className="cat-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
@@ -370,7 +359,7 @@ export default function UserDashboard() {
 
         <button
           className={`category-item ${activeCategory === 'documents_text' ? 'active' : ''}`}
-          onClick={() => setActiveCategory(prev => prev === 'documents_text' ? 'all' : 'documents_text')}
+          onClick={() => changeCategory(activeCategory === 'documents_text' ? 'all' : 'documents_text')}
           title="Documents / Text"
         >
           <svg className="cat-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
@@ -395,7 +384,7 @@ export default function UserDashboard() {
 
         <button
           className={`category-item ${activeCategory === 'audio' ? 'active' : ''}`}
-          onClick={() => setActiveCategory(prev => prev === 'audio' ? 'all' : 'audio')}
+          onClick={() => changeCategory(activeCategory === 'audio' ? 'all' : 'audio')}
           title="Audio"
         >
           <svg className="cat-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
@@ -406,7 +395,7 @@ export default function UserDashboard() {
 
         <button
           className={`category-item ${activeCategory === 'misc' ? 'active' : ''}`}
-          onClick={() => setActiveCategory(prev => prev === 'misc' ? 'all' : 'misc')}
+          onClick={() => changeCategory(activeCategory === 'misc' ? 'all' : 'misc')}
           title="Miscellaneous"
         >
           <svg className="cat-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
