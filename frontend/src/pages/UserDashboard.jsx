@@ -25,7 +25,30 @@ function getTypeBadge(filename) {
   return ext.slice(0,4).toUpperCase() || 'FILE';
 }
 
-/* ── Single File Row ────────────────────────────────── */
+/* ── Animated counter (0 → target) ─────────────────── */
+function useCountUp(target, trigger) {
+  const [displayed, setDisplayed] = useState(0);
+  useEffect(() => {
+    if (target === 0) { setDisplayed(0); return; }
+    const duration = 420;          // ms — short & snappy
+    const steps = Math.min(target, 28);  // max 28 ticks regardless of file count
+    const interval = duration / steps;
+    let current = 0;
+    setDisplayed(0);
+    const id = setInterval(() => {
+      current += 1;
+      // ease-out: jump to target faster as we approach the end
+      const progress = current / steps;
+      const value = Math.round(target * (1 - Math.pow(1 - progress, 2)));
+      setDisplayed(Math.min(value, target));
+      if (current >= steps) clearInterval(id);
+    }, interval);
+    return () => clearInterval(id);
+  }, [target, trigger]); // re-run when trigger changes (category switch)
+  return displayed;
+}
+
+/* ── Single File Row (list mode) ────────────────────── */
 function FileRow({ file, onSelect, onDelete, onDownload }) {
   return (
     <div className="file-row" onClick={() => onSelect(file)}>
@@ -43,6 +66,52 @@ function FileRow({ file, onSelect, onDelete, onDownload }) {
   );
 }
 
+/* ── Single File Card (grid mode) ───────────────────── */
+function FileCard({ file, onSelect, onDelete, onDownload }) {
+  return (
+    <div className="file-card" onClick={() => onSelect(file)}>
+      <div className="file-card-icon">{getTypeBadge(file.filename)}</div>
+      <div className="file-card-name" title={file.filename}>{file.filename}</div>
+      <div className="file-card-meta">{formatBytes(file.size)} · {formatRelTime(file.created_at)}</div>
+      <div className="file-card-actions" onClick={e => e.stopPropagation()}>
+        <button className="file-action-btn" title="Download" onClick={() => onDownload(file)}>↓</button>
+        <button className="file-action-btn danger" title="Delete" onClick={() => onDelete(file)}>✕</button>
+      </div>
+    </div>
+  );
+}
+
+/* ── List/Grid toggle icons ──────────────────────────── */
+function ListIcon() {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" width="14" height="14">
+      <line x1="8" y1="6"  x2="21" y2="6"  />
+      <line x1="8" y1="12" x2="21" y2="12" />
+      <line x1="8" y1="18" x2="21" y2="18" />
+      <circle cx="4" cy="6"  r="1" fill="currentColor" stroke="none" />
+      <circle cx="4" cy="12" r="1" fill="currentColor" stroke="none" />
+      <circle cx="4" cy="18" r="1" fill="currentColor" stroke="none" />
+    </svg>
+  );
+}
+function GridIcon() {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" width="14" height="14">
+      <rect x="3"  y="3"  width="8" height="8" rx="1.5" />
+      <rect x="13" y="3"  width="8" height="8" rx="1.5" />
+      <rect x="3"  y="13" width="8" height="8" rx="1.5" />
+      <rect x="13" y="13" width="8" height="8" rx="1.5" />
+    </svg>
+  );
+}
+
+/* ── Storage dot color ───────────────────────────────── */
+function getStorageColor(pct) {
+  if (pct >= 85) return 'red';
+  if (pct >= 60) return 'amber';
+  return 'green';
+}
+
 /* ── Main Dashboard ─────────────────────────────────── */
 export default function UserDashboard() {
   const { user, logout, refetchUser } = useAuth();
@@ -53,7 +122,8 @@ export default function UserDashboard() {
   const [confirmDelete, setConfirmDelete] = useState(null);
   const [toasts, setToasts] = useState([]);
   const [activeCategory, setActiveCategory] = useState('all');
-  const [animKey, setAnimKey] = useState(0);          // triggers macOS re-enter animation
+  const [animKey, setAnimKey] = useState(0);          // triggers macOS re-enter animation + count-up
+  const [viewMode, setViewMode] = useState('list');   // 'list' | 'grid'
   const [uploading, setUploading] = useState(false);
   const [uploadingName, setUploadingName] = useState('');
   const [dragging, setDragging] = useState(false);
@@ -64,7 +134,7 @@ export default function UserDashboard() {
   /* ── change category with animation ── */
   const changeCategory = useCallback((cat) => {
     setActiveCategory(cat);
-    setAnimKey(k => k + 1);  // force re-mount → entrance animation
+    setAnimKey(k => k + 1);
   }, []);
 
   const addToast = useCallback((message, type = 'success') => {
@@ -168,9 +238,24 @@ export default function UserDashboard() {
     return result.filter(f => f.filename.toLowerCase().includes(q) || f.id.toLowerCase().includes(q));
   }, [files, searchQuery, activeCategory]);
 
+  /* ── Animated count — resets on every category change ── */
+  const animatedCount = useCountUp(loading ? 0 : filteredFiles.length, animKey);
+
   const usedBytes = user?.storage_used || 0;
   const quotaBytes = user?.storage_quota || (1024 * 1024 * 1024);
   const quotaPct = Math.min(100, Math.round((usedBytes / quotaBytes) * 100));
+
+  /* ── Storage dot config ── */
+  const storageColor = getStorageColor(quotaPct);
+  const freeBytes = Math.max(0, quotaBytes - usedBytes);
+  const storageDots = [
+    // dot 1 — always lit, colour = overall health
+    { lit: true,  color: storageColor, tip: `${quotaPct}% used — ${formatBytes(freeBytes)} free` },
+    // dot 2 — lit if < 85% used
+    { lit: quotaPct < 85,  color: quotaPct < 85  ? storageColor : 'dim', tip: quotaPct < 85  ? 'Plenty of space remaining' : 'Almost full' },
+    // dot 3 — lit only if < 60% used (comfortable zone)
+    { lit: quotaPct < 60,  color: quotaPct < 60  ? 'green' : 'dim',      tip: quotaPct < 60  ? 'Storage healthy' : 'Storage above 60%' },
+  ];
 
   const catLabel = CATEGORIES[activeCategory]?.label ?? 'All Files';
 
@@ -248,71 +333,138 @@ export default function UserDashboard() {
             <div className="files-panel-header">
               <div>
                 <div className="files-panel-title">{catLabel}</div>
-                <div className="files-panel-count">{filteredFiles.length}</div>
+                {/* Animated count number */}
+                <div className="files-panel-count">
+                  {loading ? '—' : animatedCount}
+                </div>
                 <div className="files-panel-subcount">
                   {searchQuery ? `matching "${searchQuery}"` : 'stored securely'}
                 </div>
               </div>
+
+              {/* List / Grid view toggle */}
+              <div className="view-toggle">
+                <button
+                  className={`view-toggle-btn${viewMode === 'list' ? ' active' : ''}`}
+                  onClick={() => setViewMode('list')}
+                  title="List view"
+                  aria-label="Switch to list view"
+                >
+                  <ListIcon />
+                </button>
+                <button
+                  className={`view-toggle-btn${viewMode === 'grid' ? ' active' : ''}`}
+                  onClick={() => setViewMode('grid')}
+                  title="Grid view"
+                  aria-label="Switch to grid view"
+                >
+                  <GridIcon />
+                </button>
+              </div>
             </div>
 
-            <div className="file-list">
-              {/* Uploading inline row */}
-              {uploading && (
-                <div className="file-row uploading-row" style={{ pointerEvents:'none', background:'rgba(255,75,53,0.04)', borderBottom:'1px solid rgba(255,75,53,0.12)' }}>
-                  <div className="file-row-icon" style={{ color:'var(--accent)', borderColor:'rgba(255,75,53,0.22)' }}>UP</div>
-                  <div className="file-row-info" style={{ flex: 1 }}>
-                    <div className="file-row-name" style={{ color:'var(--accent)', fontWeight:500 }}>Encrypting &amp; distributing {uploadingName}…</div>
-                    <div className="upload-progress-bar-track" style={{ height:2, background:'rgba(255,255,255,0.06)', borderRadius:1, overflow:'hidden', marginTop:4 }}>
-                      <div className="upload-progress-bar-fill" style={{ height:'100%', background:'var(--accent)', animation:'progressPulse 1.2s ease-in-out infinite' }} />
+            {/* ── List view ── */}
+            {viewMode === 'list' && (
+              <div className="file-list">
+                {/* Uploading inline row */}
+                {uploading && (
+                  <div className="file-row uploading-row" style={{ pointerEvents:'none', background:'rgba(255,75,53,0.04)', borderBottom:'1px solid rgba(255,75,53,0.12)' }}>
+                    <div className="file-row-icon" style={{ color:'var(--accent)', borderColor:'rgba(255,75,53,0.22)' }}>UP</div>
+                    <div className="file-row-info" style={{ flex: 1 }}>
+                      <div className="file-row-name" style={{ color:'var(--accent)', fontWeight:500 }}>Encrypting &amp; distributing {uploadingName}…</div>
+                      <div className="upload-progress-bar-track" style={{ height:2, background:'rgba(255,255,255,0.06)', borderRadius:1, overflow:'hidden', marginTop:4 }}>
+                        <div className="upload-progress-bar-fill" style={{ height:'100%', background:'var(--accent)', animation:'progressPulse 1.2s ease-in-out infinite' }} />
+                      </div>
                     </div>
                   </div>
-                </div>
-              )}
+                )}
 
-              {loading ? (
-                [1,2,3,4,5].map(i => (
-                  <div key={i} className="file-row-skeleton">
-                    <div className="skeleton-box" style={{ width:32, height:32, borderRadius:8, flexShrink:0 }} />
-                    <div style={{ flex:1, display:'flex', flexDirection:'column', gap:5 }}>
-                      <div className="skeleton-box" style={{ height:12, width:'60%' }} />
-                      <div className="skeleton-box" style={{ height:10, width:'35%' }} />
+                {loading ? (
+                  [1,2,3,4,5].map(i => (
+                    <div key={i} className="file-row-skeleton">
+                      <div className="skeleton-box" style={{ width:32, height:32, borderRadius:8, flexShrink:0 }} />
+                      <div style={{ flex:1, display:'flex', flexDirection:'column', gap:5 }}>
+                        <div className="skeleton-box" style={{ height:12, width:'60%' }} />
+                        <div className="skeleton-box" style={{ height:10, width:'35%' }} />
+                      </div>
+                      <div className="skeleton-box" style={{ width:48, height:10 }} />
                     </div>
-                    <div className="skeleton-box" style={{ width:48, height:10 }} />
+                  ))
+                ) : filteredFiles.length === 0 ? (
+                  <div className="files-empty">
+                    <div className="files-empty-icon">⬡</div>
+                    <div className="files-empty-text">
+                      {searchQuery
+                        ? `No ${catLabel.toLowerCase()} match your search`
+                        : activeCategory === 'all'
+                          ? 'No files yet — drag anywhere to upload'
+                          : `No ${catLabel.toLowerCase()} stored`}
+                    </div>
                   </div>
-                ))
-              ) : filteredFiles.length === 0 ? (
-                <div className="files-empty">
-                  <div className="files-empty-icon">⬡</div>
-                  <div className="files-empty-text">
-                    {searchQuery
-                      ? `No ${catLabel.toLowerCase()} match your search`
-                      : activeCategory === 'all'
-                        ? 'No files yet — drag anywhere to upload'
-                        : `No ${catLabel.toLowerCase()} stored`}
+                ) : (
+                  filteredFiles.map(file => (
+                    <FileRow
+                      key={file.id}
+                      file={file}
+                      onSelect={setSelectedFile}
+                      onDelete={setConfirmDelete}
+                      onDownload={handleDownload}
+                    />
+                  ))
+                )}
+              </div>
+            )}
+
+            {/* ── Grid view ── */}
+            {viewMode === 'grid' && (
+              <div className="file-grid">
+                {loading ? (
+                  [1,2,3,4,5,6,7,8].map(i => (
+                    <div key={i} className="file-card-skeleton">
+                      <div className="skeleton-box" style={{ width:44, height:44, borderRadius:10, margin:'0 auto 12px' }} />
+                      <div className="skeleton-box" style={{ height:11, width:'75%', margin:'0 auto 6px' }} />
+                      <div className="skeleton-box" style={{ height:9, width:'50%', margin:'0 auto' }} />
+                    </div>
+                  ))
+                ) : filteredFiles.length === 0 ? (
+                  <div className="files-empty" style={{ gridColumn: '1/-1' }}>
+                    <div className="files-empty-icon">⬡</div>
+                    <div className="files-empty-text">
+                      {searchQuery
+                        ? `No ${catLabel.toLowerCase()} match your search`
+                        : activeCategory === 'all'
+                          ? 'No files yet — drag anywhere to upload'
+                          : `No ${catLabel.toLowerCase()} stored`}
+                    </div>
                   </div>
-                </div>
-              ) : (
-                filteredFiles.map(file => (
-                  <FileRow
-                    key={file.id}
-                    file={file}
-                    onSelect={setSelectedFile}
-                    onDelete={setConfirmDelete}
-                    onDownload={handleDownload}
-                  />
-                ))
-              )}
-            </div>
+                ) : (
+                  filteredFiles.map(file => (
+                    <FileCard
+                      key={file.id}
+                      file={file}
+                      onSelect={setSelectedFile}
+                      onDelete={setConfirmDelete}
+                      onDownload={handleDownload}
+                    />
+                  ))
+                )}
+              </div>
+            )}
           </div>
         </div>
 
         {/* Footer */}
         <footer className="dash-footer">
           <span className="dash-footer-tag">Stored across the LockIn network</span>
+          {/* Color-coded storage dots */}
           <div className="dash-footer-dots">
-            <div className="dash-footer-dot active" title="Coordinator online" />
-            <div className="dash-footer-dot active" title="Node cluster" />
-            <div className="dash-footer-dot" title="Offline node" />
+            {storageDots.map((dot, i) => (
+              <div
+                key={i}
+                className={`dash-footer-dot${dot.lit ? ` active storage-${dot.color}` : ''}`}
+                title={dot.tip}
+              />
+            ))}
           </div>
         </footer>
       </div>
