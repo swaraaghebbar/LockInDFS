@@ -43,12 +43,27 @@ function FileRow({ file, onSelect, onDelete, onDownload }) {
 }
 
 /* ── Upload Panel (integrated) ─────────────────────── */
-function UploadPanel({ onUploaded, addToast }) {
+function UploadPanel({ onUploaded, addToast, uploadTriggerRef }) {
   const [dragging, setDragging] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [uploadingName, setUploadingName] = useState('');
   const [success, setSuccess] = useState(false);
   const inputRef = useRef(null);
+
+  useEffect(() => {
+    if (uploadTriggerRef) {
+      uploadTriggerRef.current = () => {
+        if (!uploading && !success) {
+          inputRef.current?.click();
+        }
+      };
+    }
+    return () => {
+      if (uploadTriggerRef) {
+        uploadTriggerRef.current = null;
+      }
+    };
+  }, [uploadTriggerRef, uploading, success]);
 
   const handleFiles = useCallback(async (files) => {
     const file = files[0];
@@ -167,6 +182,8 @@ export default function UserDashboard() {
   const [selectedFile, setSelectedFile] = useState(null);
   const [confirmDelete, setConfirmDelete] = useState(null);
   const [toasts, setToasts] = useState([]);
+  const [activeCategory, setActiveCategory] = useState('all');
+  const uploadTriggerRef = useRef(null);
 
   const addToast = useCallback((message, type = 'success') => {
     const id = Date.now();
@@ -216,12 +233,29 @@ export default function UserDashboard() {
   };
 
   const filteredFiles = useMemo(() => {
-    if (!searchQuery.trim()) return files;
+    let result = files;
+
+    if (activeCategory !== 'all') {
+      result = result.filter(file => {
+        const ext = file.filename.split('.').pop()?.toLowerCase() || '';
+        const isPicVid = ['jpg','jpeg','png','gif','webp','svg','mp4','webm','mov'].includes(ext);
+        const isDocText = ['pdf','doc','docx','txt','md','csv','xls','xlsx'].includes(ext);
+        const isAudio = ['mp3','wav','ogg','flac'].includes(ext);
+
+        if (activeCategory === 'pictures_video') return isPicVid;
+        if (activeCategory === 'documents_text') return isDocText;
+        if (activeCategory === 'audio') return isAudio;
+        if (activeCategory === 'misc') return !isPicVid && !isDocText && !isAudio;
+        return true;
+      });
+    }
+
+    if (!searchQuery.trim()) return result;
     const q = searchQuery.toLowerCase();
-    return files.filter(
+    return result.filter(
       f => f.filename.toLowerCase().includes(q) || f.id.toLowerCase().includes(q)
     );
-  }, [files, searchQuery]);
+  }, [files, searchQuery, activeCategory]);
 
   const usedBytes = user?.storage_used || 0;
   const quotaBytes = user?.storage_quota || (1024 * 1024 * 1024);
@@ -328,7 +362,7 @@ export default function UserDashboard() {
           </div>
 
           {/* Upload Panel */}
-          <UploadPanel onUploaded={handleUploaded} addToast={addToast} />
+          <UploadPanel onUploaded={handleUploaded} addToast={addToast} uploadTriggerRef={uploadTriggerRef} />
         </div>
 
         {/* Footer */}
@@ -374,6 +408,69 @@ export default function UserDashboard() {
         {toasts.map(t => (
           <div key={t.id} className={`toast ${t.type}`}>{t.message}</div>
         ))}
+      </div>
+
+      {/* ── Floating File Category Bar ── */}
+      <div className="floating-category-bar">
+        <button
+          className={`category-item ${activeCategory === 'pictures_video' ? 'active' : ''}`}
+          onClick={() => setActiveCategory(prev => prev === 'pictures_video' ? 'all' : 'pictures_video')}
+        >
+          <svg className="cat-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+            <rect x="3" y="3" width="18" height="18" rx="3" />
+            <circle cx="8.5" cy="8.5" r="1.5" />
+            <path d="M21 15l-5-5L5 21" />
+          </svg>
+          <span className="category-label">Pictures / Video</span>
+        </button>
+
+        <button
+          className={`category-item ${activeCategory === 'documents_text' ? 'active' : ''}`}
+          onClick={() => setActiveCategory(prev => prev === 'documents_text' ? 'all' : 'documents_text')}
+        >
+          <svg className="cat-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+            <polyline points="14 2 14 8 20 8" />
+            <line x1="16" y1="13" x2="8" y2="13" />
+            <line x1="16" y1="17" x2="8" y2="17" />
+          </svg>
+          <span className="category-label">Documents / Text</span>
+        </button>
+
+        <button
+          className="category-item primary-upload"
+          onClick={() => uploadTriggerRef.current?.()}
+        >
+          <svg className="cat-svg primary-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+            <polyline points="17 8 12 3 7 8" />
+            <line x1="12" y1="3" x2="12" y2="15" />
+          </svg>
+          <span className="category-label">File Upload</span>
+        </button>
+
+        <button
+          className={`category-item ${activeCategory === 'audio' ? 'active' : ''}`}
+          onClick={() => setActiveCategory(prev => prev === 'audio' ? 'all' : 'audio')}
+        >
+          <svg className="cat-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+            <path d="M3 18v-6a9 9 0 0 1 18 0v6" />
+            <path d="M21 19a2 2 0 0 1-2 2h-1a2 2 0 0 1-2-2v-3a2 2 0 0 1 2-2h3zM3 19a2 2 0 0 0 2 2h1a2 2 0 0 0 2-2v-3a2 2 0 0 0-2-2H3z" />
+          </svg>
+          <span className="category-label">Audio</span>
+        </button>
+
+        <button
+          className={`category-item ${activeCategory === 'misc' ? 'active' : ''}`}
+          onClick={() => setActiveCategory(prev => prev === 'misc' ? 'all' : 'misc')}
+        >
+          <svg className="cat-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+            <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z" />
+            <polyline points="3.27 6.96 12 12.01 20.73 6.96" />
+            <line x1="12" y1="22.08" x2="12" y2="12" />
+          </svg>
+          <span className="category-label">Miscellaneous</span>
+        </button>
       </div>
     </div>
   );
