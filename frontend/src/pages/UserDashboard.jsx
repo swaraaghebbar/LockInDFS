@@ -55,7 +55,7 @@ function FileTypeIcon({ filename }) {
   );
 }
 
-/* ── Animated counter (0 → target) ─────────────────── */
+/* ── Animated counter ── */
 function useCountUp(target, trigger) {
   const [displayed, setDisplayed] = useState(0);
   useEffect(() => {
@@ -77,14 +77,14 @@ function useCountUp(target, trigger) {
   return displayed;
 }
 
-/* ── Unified Image & Document Inline Hover Preview ─────── */
-function InlinePreview({ file }) {
+/* ── Universal preview generator for grid view ── */
+function UniversalPreview({ file }) {
   const filename = file.filename || '';
   const ext = filename.split('.').pop()?.toLowerCase() || '';
-  const isImage = ['jpg', 'jpeg', 'png', 'gif', 'webp', 'svg'].includes(ext);
-  const isDoc = ['pdf', 'doc', 'docx', 'txt', 'md', 'csv', 'xls', 'xlsx'].includes(ext);
   const previewUrl = getPreviewUrl(file.id);
 
+  // 1. Images
+  const isImage = ['jpg', 'jpeg', 'png', 'gif', 'webp', 'svg'].includes(ext);
   if (isImage) {
     return (
       <div className="card-inline-preview">
@@ -92,10 +92,12 @@ function InlinePreview({ file }) {
       </div>
     );
   }
+
+  // 2. Documents & Texts
+  const isDoc = ['pdf', 'doc', 'docx', 'txt', 'md', 'csv', 'xls', 'xlsx'].includes(ext);
   if (isDoc) {
     return (
       <div className="card-inline-preview doc-preview-card">
-        {/* Render PDF in iframe, or file details if text/doc */}
         {ext === 'pdf' ? (
           <iframe src={previewUrl} title={filename} scroll="no" style={{ pointerEvents: 'none', border: 'none', width: '100%', height: '100%', overflow: 'hidden' }} />
         ) : (
@@ -107,18 +109,42 @@ function InlinePreview({ file }) {
       </div>
     );
   }
-  return null;
+
+  // 3. Audio
+  const isAudio = ['mp3', 'wav', 'ogg', 'flac'].includes(ext);
+  if (isAudio) {
+    return (
+      <div className="card-inline-preview audio-preview-card">
+        <span className="audio-preview-icon">🎵</span>
+        <span className="audio-preview-ext">AUDIO</span>
+      </div>
+    );
+  }
+
+  // 4. Video
+  const isVideo = ['mp4', 'webm', 'mov'].includes(ext);
+  if (isVideo) {
+    return (
+      <div className="card-inline-preview video-preview-card">
+        <video src={previewUrl} muted style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+      </div>
+    );
+  }
+
+  // 5. Fallback for code, zip, and other types
+  return (
+    <div className="card-inline-preview fallback-preview-card">
+      <span className="fallback-preview-ext">.{ext.toUpperCase() || 'FILE'}</span>
+    </div>
+  );
 }
 
-/* ── Single File Row (list mode) ────────────────────── */
+/* ── Single File Row (list mode — NO HOVER PREVIEW) ── */
 function FileRow({ file, onSelect, onDelete, onDownload }) {
   return (
     <div className="file-row" onClick={() => onSelect(file)}>
-      <div className="file-row-icon-wrap">
-        <div className="file-row-icon">
-          <FileTypeIcon filename={file.filename} />
-        </div>
-        <InlinePreview file={file} />
+      <div className="file-row-icon">
+        <FileTypeIcon filename={file.filename} />
       </div>
       <div className="file-row-info">
         <div className="file-row-name" title={file.filename}>{file.filename}</div>
@@ -133,7 +159,7 @@ function FileRow({ file, onSelect, onDelete, onDownload }) {
   );
 }
 
-/* ── Single File Card (grid mode) ───────────────────── */
+/* ── Single File Card (grid mode — HAS HOVER PREVIEW) ── */
 function FileCard({ file, onSelect, onDelete, onDownload }) {
   return (
     <div className="file-card" onClick={() => onSelect(file)}>
@@ -141,7 +167,7 @@ function FileCard({ file, onSelect, onDelete, onDownload }) {
         <div className="file-card-icon">
           <FileTypeIcon filename={file.filename} />
         </div>
-        <InlinePreview file={file} />
+        <UniversalPreview file={file} />
       </div>
       <div className="file-card-name" title={file.filename}>{file.filename}</div>
       <div className="file-card-meta">{formatBytes(file.size)} · {formatRelTime(file.created_at)}</div>
@@ -177,7 +203,7 @@ function GridIcon() {
   );
 }
 
-/* ── Storage dot color ───────────────────────────────── */
+/* ── Storage dot color ── */
 function getStorageColor(pct) {
   if (pct >= 85) return 'red';
   if (pct >= 60) return 'amber';
@@ -310,14 +336,12 @@ export default function UserDashboard() {
     return result.filter(f => f.filename.toLowerCase().includes(q) || f.id.toLowerCase().includes(q));
   }, [files, searchQuery, activeCategory]);
 
-  /* ── Animated count ── */
   const animatedCount = useCountUp(loading ? 0 : filteredFiles.length, animKey);
 
   const usedBytes = user?.storage_used || 0;
   const quotaBytes = user?.storage_quota || (1024 * 1024 * 1024);
   const quotaPct = Math.min(100, Math.round((usedBytes / quotaBytes) * 100));
 
-  /* ── Storage dot config ── */
   const storageColor = getStorageColor(quotaPct);
   const freeBytes = Math.max(0, quotaBytes - usedBytes);
   const storageDots = [
@@ -330,27 +354,21 @@ export default function UserDashboard() {
 
   return (
     <div className="dash-page">
-      {/* Hidden file input */}
       <input ref={hiddenInputRef} type="file" onChange={handleFileSelect} style={{ display: 'none' }} />
-
-      {/* Full-page bg (visible through glass container) */}
       <div className="dash-page-bg" />
 
-      {/* ── Glass App Container ── */}
       <div
         className={`dash-container${dragging ? ' drag-over' : ''}`}
         onDragOver={handleDragOver}
         onDragLeave={handleDragLeave}
         onDrop={handleDrop}
       >
-        {/* Header */}
         <header className="dash-header">
           <div className="dash-wordmark">
             <div className="dash-wordmark-dot" />
             LOCKIN
           </div>
 
-          {/* Search + All Files pill */}
           <div className="dash-search-area">
             <div className="dash-search-wrap">
               <span className="dash-search-icon">⌕</span>
@@ -366,7 +384,6 @@ export default function UserDashboard() {
               )}
             </div>
 
-            {/* All Files button */}
             <button
               className={`all-files-btn${activeCategory === 'all' ? ' active' : ''}`}
               onClick={() => changeCategory('all')}
@@ -382,7 +399,6 @@ export default function UserDashboard() {
             </button>
           </div>
 
-          {/* Right side */}
           <div className="dash-header-right">
             <div className="dash-quota-wrap">
               <div className="dash-quota-text">{formatBytes(usedBytes)} / {formatBytes(quotaBytes)}</div>
@@ -395,9 +411,7 @@ export default function UserDashboard() {
           </div>
         </header>
 
-        {/* Main body */}
         <div className="dash-body">
-          {/* macOS-animated screen */}
           <div key={animKey} className="files-panel mac-enter">
             <div className="files-panel-header">
               <div>
@@ -410,7 +424,6 @@ export default function UserDashboard() {
                 </div>
               </div>
 
-              {/* List / Grid view toggle */}
               <div className="view-toggle">
                 <button
                   className={`view-toggle-btn${viewMode === 'list' ? ' active' : ''}`}
@@ -431,7 +444,6 @@ export default function UserDashboard() {
               </div>
             </div>
 
-            {/* ── List view ── */}
             {viewMode === 'list' && (
               <div className="file-list">
                 {uploading && (
@@ -482,7 +494,6 @@ export default function UserDashboard() {
               </div>
             )}
 
-            {/* ── Grid view ── */}
             {viewMode === 'grid' && (
               <div className="file-grid">
                 {loading ? (
@@ -520,7 +531,6 @@ export default function UserDashboard() {
           </div>
         </div>
 
-        {/* Footer */}
         <footer className="dash-footer">
           <span className="dash-footer-tag">Stored across the LockIn network</span>
           <div className="dash-footer-dots">
@@ -535,12 +545,10 @@ export default function UserDashboard() {
         </footer>
       </div>
 
-      {/* ── File Preview Modal ── */}
       {selectedFile && (
         <FilePreviewModal file={selectedFile} onClose={() => setSelectedFile(null)} addToast={addToast} />
       )}
 
-      {/* ── Confirm Delete Modal ── */}
       {confirmDelete && (
         <div className="overlay" onClick={() => setConfirmDelete(null)}>
           <div className="modal" onClick={e => e.stopPropagation()}>
@@ -554,14 +562,12 @@ export default function UserDashboard() {
         </div>
       )}
 
-      {/* ── Toasts ── */}
       <div className="toast-container">
         {toasts.map(t => (
           <div key={t.id} className={`toast ${t.type}`}>{t.message}</div>
         ))}
       </div>
 
-      {/* ── Floating File Category Bar ── */}
       <div className="floating-category-bar">
         <button
           className={`category-item ${activeCategory === 'pictures_video' ? 'active' : ''}`}
