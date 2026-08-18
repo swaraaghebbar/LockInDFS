@@ -929,11 +929,19 @@ input, textarea { font-family: inherit; }
   position: relative;
   transition: all var(--t-fast);
   cursor: pointer;
+  overflow: hidden; /* clip the expanding full-card preview */
 }
 .file-card:hover {
-  background: rgba(255, 255, 255, 0.06);
+  background: rgba(255, 255, 255, 0.05);
   border-color: rgba(255, 255, 255, 0.12);
   transform: translateY(-2px);
+}
+.file-card-icon-wrap {
+  width: 44px;
+  height: 44px;
+  position: relative;
+  margin-bottom: 12px;
+  transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1);
 }
 .file-card-icon {
   width: 100%;
@@ -952,7 +960,34 @@ input, textarea { font-family: inherit; }
 .file-card:hover .file-card-icon {
   color: var(--text-primary);
   border-color: rgba(255, 255, 255, 0.18);
+  opacity: 0;
+  transform: scale(0.85);
 }
+
+/* Full-card expanding preview styling */
+.file-card .card-inline-preview {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 44px;
+  height: 44px;
+  transform: translate(-50%, -50%) scale(1);
+  border-radius: 10px;
+  z-index: 5;
+  opacity: 0;
+  pointer-events: none;
+  transition: width 0.4s cubic-bezier(0.16, 1, 0.3, 1),
+              height 0.4s cubic-bezier(0.16, 1, 0.3, 1),
+              border-radius 0.4s cubic-bezier(0.16, 1, 0.3, 1),
+              opacity 0.3s ease;
+}
+.file-card:hover .card-inline-preview {
+  opacity: 1;
+  width: 100%;
+  height: 100%;
+  border-radius: 0; /* completely fills the parent card card boundary */
+}
+
 .file-card-name {
   font-size: 0.8rem;
   font-weight: 400;
@@ -962,12 +997,24 @@ input, textarea { font-family: inherit; }
   overflow: hidden;
   text-overflow: ellipsis;
   margin-bottom: 4px;
+  transition: opacity 0.3s ease, transform 0.3s ease;
 }
+.file-card:hover .file-card-name {
+  opacity: 0;
+  transform: translateY(4px);
+}
+
 .file-card-meta {
   font-size: 0.68rem;
   color: var(--text-muted);
   font-family: var(--font-mono);
+  transition: opacity 0.3s ease, transform 0.3s ease;
 }
+.file-card:hover .file-card-meta {
+  opacity: 0;
+  transform: translateY(6px);
+}
+
 .file-card-actions {
   position: absolute;
   top: 10px;
@@ -975,11 +1022,13 @@ input, textarea { font-family: inherit; }
   display: flex;
   gap: 4px;
   opacity: 0;
+  z-index: 10; /* keep actions clickable over full-bleed preview */
   transition: opacity var(--t-fast);
 }
 .file-card:hover .file-card-actions {
   opacity: 1;
 }
+
 
 /* Skeleton Grid */
 .file-card-skeleton {
