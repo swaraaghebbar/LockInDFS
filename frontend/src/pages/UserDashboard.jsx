@@ -42,137 +42,6 @@ function FileRow({ file, onSelect, onDelete, onDownload }) {
   );
 }
 
-/* ── Upload Panel (integrated) ─────────────────────── */
-function UploadPanel({ onUploaded, addToast, uploadTriggerRef }) {
-  const [dragging, setDragging] = useState(false);
-  const [uploading, setUploading] = useState(false);
-  const [uploadingName, setUploadingName] = useState('');
-  const [success, setSuccess] = useState(false);
-  const inputRef = useRef(null);
-
-  useEffect(() => {
-    if (uploadTriggerRef) {
-      uploadTriggerRef.current = () => {
-        if (!uploading && !success) {
-          inputRef.current?.click();
-        }
-      };
-    }
-    return () => {
-      if (uploadTriggerRef) {
-        uploadTriggerRef.current = null;
-      }
-    };
-  }, [uploadTriggerRef, uploading, success]);
-
-  const handleFiles = useCallback(async (files) => {
-    const file = files[0];
-    if (!file) return;
-    setUploadingName(file.name);
-    setUploading(true);
-    setSuccess(false);
-    try {
-      const result = await uploadFile(file);
-      setSuccess(true);
-      addToast(`Uploaded "${file.name}"`, 'success');
-      onUploaded(result);
-      setTimeout(() => setSuccess(false), 3000);
-    } catch (e) {
-      addToast(`Upload failed: ${e.message}`, 'error');
-    } finally {
-      setUploading(false);
-      setUploadingName('');
-      if (inputRef.current) inputRef.current.value = '';
-    }
-  }, [onUploaded, addToast]);
-
-  const onDrop = (e) => {
-    e.preventDefault();
-    setDragging(false);
-    handleFiles(e.dataTransfer.files);
-  };
-
-  return (
-    <div className="upload-panel">
-      <div className="upload-panel-header">
-        <div className="upload-pending-info">
-          <div className="upload-pending-count">
-            {uploading ? '···' : success ? '✓' : '+'}
-          </div>
-          <div className="upload-pending-label">
-            {uploading ? 'Uploading' : success ? 'Locked in' : 'Upload file'}
-          </div>
-          {uploading && (
-            <div className="upload-pending-size">{uploadingName}</div>
-          )}
-        </div>
-
-        {!uploading && !success && (
-          <button
-            className="upload-cta-btn"
-            onClick={() => inputRef.current?.click()}
-          >
-            ↑ Upload
-          </button>
-        )}
-      </div>
-
-      {/* Progress bar */}
-      {uploading && (
-        <div className="upload-progress-wrap">
-          <div className="upload-progress-bar-track">
-            <div className="upload-progress-bar-fill" style={{ width: '100%' }} />
-          </div>
-          <div className="upload-progress-file">
-            Encrypting &amp; distributing — {uploadingName}
-          </div>
-        </div>
-      )}
-
-      {/* Success state */}
-      {success && (
-        <div className="upload-success">
-          <span>✓</span>
-          <span>Stored securely across the network</span>
-        </div>
-      )}
-
-      {/* Drop zone */}
-      {!uploading && !success && (
-        <div
-          className={`drop-zone ${dragging ? 'drag-over' : ''}`}
-          onDragOver={(e) => { e.preventDefault(); setDragging(true); }}
-          onDragLeave={() => setDragging(false)}
-          onDrop={onDrop}
-          onClick={() => inputRef.current?.click()}
-        >
-          <input
-            ref={inputRef}
-            type="file"
-            id="file-input"
-            onChange={(e) => handleFiles(e.target.files)}
-            style={{ display: 'none' }}
-          />
-          <span className="drop-zone-icon">⬡</span>
-          <p className="drop-zone-text">
-            <strong>Drop a file here</strong><br />
-            or click to browse
-          </p>
-        </div>
-      )}
-
-      {/* Subtle info */}
-      {!uploading && !success && (
-        <div style={{ marginTop: 'auto', paddingTop: 16 }}>
-          <p style={{ fontSize: '0.68rem', color: 'var(--text-muted)', lineHeight: 1.6, letterSpacing: '0.02em' }}>
-            Files are AES-GCM encrypted in-browser · split into 1 MiB chunks · replicated 3× across the node cluster
-          </p>
-        </div>
-      )}
-    </div>
-  );
-}
-
 /* ── Main Dashboard ─────────────────────────────────── */
 export default function UserDashboard() {
   const { user, logout, refetchUser } = useAuth();
@@ -183,6 +52,11 @@ export default function UserDashboard() {
   const [confirmDelete, setConfirmDelete] = useState(null);
   const [toasts, setToasts] = useState([]);
   const [activeCategory, setActiveCategory] = useState('all');
+  const [uploading, setUploading] = useState(false);
+  const [uploadingName, setUploadingName] = useState('');
+  const [dragging, setDragging] = useState(false);
+
+  const hiddenInputRef = useRef(null);
   const uploadTriggerRef = useRef(null);
 
   const addToast = useCallback((message, type = 'success') => {
@@ -204,10 +78,41 @@ export default function UserDashboard() {
 
   useEffect(() => { loadFiles(); }, [loadFiles]);
 
-  const handleUploaded = useCallback(() => {
-    loadFiles();
-    refetchUser();
-  }, [loadFiles, refetchUser]);
+  const handleUploadFile = useCallback(async (file) => {
+    if (!file) return;
+    setUploadingName(file.name);
+    setUploading(true);
+    try {
+      await uploadFile(file);
+      addToast(`✓ Uploaded "${file.name}"`, 'success');
+      loadFiles();
+      refetchUser();
+    } catch (e) {
+      addToast(`✗ Upload failed: ${e.message}`, 'error');
+    } finally {
+      setUploading(false);
+      setUploadingName('');
+      if (hiddenInputRef.current) hiddenInputRef.current.value = '';
+    }
+  }, [addToast, loadFiles, refetchUser]);
+
+  const handleFileSelect = (e) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      handleUploadFile(file);
+    }
+  };
+
+  useEffect(() => {
+    uploadTriggerRef.current = () => {
+      if (!uploading) {
+        hiddenInputRef.current?.click();
+      }
+    };
+    return () => {
+      uploadTriggerRef.current = null;
+    };
+  }, [uploading]);
 
   const handleDeleteConfirmed = async () => {
     if (!confirmDelete) return;
@@ -229,6 +134,24 @@ export default function UserDashboard() {
       addToast(`Downloaded "${file.filename}"`, 'success');
     } catch (e) {
       addToast(`Download failed: ${e.message}`, 'error');
+    }
+  };
+
+  const handleDragOver = (e) => {
+    e.preventDefault();
+    setDragging(true);
+  };
+
+  const handleDragLeave = () => {
+    setDragging(false);
+  };
+
+  const handleDrop = (e) => {
+    e.preventDefault();
+    setDragging(false);
+    const file = e.dataTransfer.files?.[0];
+    if (file) {
+      handleUploadFile(file);
     }
   };
 
@@ -263,9 +186,21 @@ export default function UserDashboard() {
 
   return (
     <div className="dash-page">
+      {/* Hidden file input */}
+      <input
+        ref={hiddenInputRef}
+        type="file"
+        onChange={handleFileSelect}
+        style={{ display: 'none' }}
+      />
 
       {/* ── App Container ── */}
-      <div className="dash-container">
+      <div
+        className={`dash-container ${dragging ? 'drag-over' : ''}`}
+        onDragOver={handleDragOver}
+        onDragLeave={handleDragLeave}
+        onDrop={handleDrop}
+      >
         {/* Cinematic background */}
         <div className="dash-bg" />
 
@@ -311,9 +246,8 @@ export default function UserDashboard() {
           </div>
         </header>
 
-        {/* Main body — two columns */}
+        {/* Main body — single files panel */}
         <div className="dash-body">
-
           {/* Files Panel */}
           <div className="files-panel">
             <div className="files-panel-header">
@@ -329,6 +263,19 @@ export default function UserDashboard() {
             </div>
 
             <div className="file-list">
+              {/* Uploading progress inline row */}
+              {uploading && (
+                <div className="file-row uploading-row" style={{ pointerEvents: 'none', background: 'rgba(255,75,53,0.04)', borderBottom: '1px solid rgba(255,75,53,0.12)' }}>
+                  <div className="file-row-icon" style={{ color: 'var(--accent)', borderColor: 'rgba(255,75,53,0.22)' }}>UP</div>
+                  <div className="file-row-info" style={{ flex: 1 }}>
+                    <div className="file-row-name" style={{ color: 'var(--accent)', fontWeight: 500 }}>Encrypting &amp; distributing {uploadingName}…</div>
+                    <div className="upload-progress-bar-track" style={{ height: 2, background: 'rgba(255,255,255,0.06)', borderRadius: 1, overflow: 'hidden', marginTop: 4 }}>
+                      <div className="upload-progress-bar-fill" style={{ height: '100%', background: 'var(--accent)', animation: 'progressPulse 1.2s ease-in-out infinite' }} />
+                    </div>
+                  </div>
+                </div>
+              )}
+
               {loading ? (
                 [1,2,3,4,5].map(i => (
                   <div key={i} className="file-row-skeleton">
@@ -344,7 +291,7 @@ export default function UserDashboard() {
                 <div className="files-empty">
                   <div className="files-empty-icon">⬡</div>
                   <div className="files-empty-text">
-                    {searchQuery ? 'No files match your search' : 'No files uploaded yet'}
+                    {searchQuery ? 'No files match your search' : 'No files uploaded yet. Drag anywhere here to upload.'}
                   </div>
                 </div>
               ) : (
@@ -360,9 +307,6 @@ export default function UserDashboard() {
               )}
             </div>
           </div>
-
-          {/* Upload Panel */}
-          <UploadPanel onUploaded={handleUploaded} addToast={addToast} uploadTriggerRef={uploadTriggerRef} />
         </div>
 
         {/* Footer */}
@@ -415,18 +359,19 @@ export default function UserDashboard() {
         <button
           className={`category-item ${activeCategory === 'pictures_video' ? 'active' : ''}`}
           onClick={() => setActiveCategory(prev => prev === 'pictures_video' ? 'all' : 'pictures_video')}
+          title="Pictures / Video"
         >
           <svg className="cat-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
             <rect x="3" y="3" width="18" height="18" rx="3" />
             <circle cx="8.5" cy="8.5" r="1.5" />
             <path d="M21 15l-5-5L5 21" />
           </svg>
-          <span className="category-label">Pictures / Video</span>
         </button>
 
         <button
           className={`category-item ${activeCategory === 'documents_text' ? 'active' : ''}`}
           onClick={() => setActiveCategory(prev => prev === 'documents_text' ? 'all' : 'documents_text')}
+          title="Documents / Text"
         >
           <svg className="cat-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
             <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
@@ -434,42 +379,41 @@ export default function UserDashboard() {
             <line x1="16" y1="13" x2="8" y2="13" />
             <line x1="16" y1="17" x2="8" y2="17" />
           </svg>
-          <span className="category-label">Documents / Text</span>
         </button>
 
         <button
           className="category-item primary-upload"
           onClick={() => uploadTriggerRef.current?.()}
+          title="File Upload"
         >
           <svg className="cat-svg primary-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
             <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
             <polyline points="17 8 12 3 7 8" />
             <line x1="12" y1="3" x2="12" y2="15" />
           </svg>
-          <span className="category-label">File Upload</span>
         </button>
 
         <button
           className={`category-item ${activeCategory === 'audio' ? 'active' : ''}`}
           onClick={() => setActiveCategory(prev => prev === 'audio' ? 'all' : 'audio')}
+          title="Audio"
         >
           <svg className="cat-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
             <path d="M3 18v-6a9 9 0 0 1 18 0v6" />
             <path d="M21 19a2 2 0 0 1-2 2h-1a2 2 0 0 1-2-2v-3a2 2 0 0 1 2-2h3zM3 19a2 2 0 0 0 2 2h1a2 2 0 0 0 2-2v-3a2 2 0 0 0-2-2H3z" />
           </svg>
-          <span className="category-label">Audio</span>
         </button>
 
         <button
           className={`category-item ${activeCategory === 'misc' ? 'active' : ''}`}
           onClick={() => setActiveCategory(prev => prev === 'misc' ? 'all' : 'misc')}
+          title="Miscellaneous"
         >
           <svg className="cat-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
             <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z" />
             <polyline points="3.27 6.96 12 12.01 20.73 6.96" />
             <line x1="12" y1="22.08" x2="12" y2="12" />
           </svg>
-          <span className="category-label">Miscellaneous</span>
         </button>
       </div>
     </div>

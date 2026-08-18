@@ -352,7 +352,8 @@ input, textarea { font-family: inherit; }
   border-top: 1px solid var(--border);
   background: rgba(0,0,0,0.2);
 }
-.cinema-footer-tag {
+.cinema-footer-tag,
+.cinema-footer-copyright {
   font-size: 0.7rem;
   color: var(--text-muted);
   letter-spacing: 0.08em;
@@ -598,16 +599,13 @@ input, textarea { font-family: inherit; }
 .dash-body {
   position: relative;
   z-index: 2;
-  display: grid;
-  grid-template-columns: 1fr 380px;
-  gap: 0;
-  min-height: 600px;
+  display: block;
+  min-height: 520px;
 }
 
 /* ── Files Panel (left) ── */
 .files-panel {
   padding: 32px 36px;
-  border-right: 1px solid var(--border);
   display: flex;
   flex-direction: column;
   gap: 24px;
@@ -1416,14 +1414,14 @@ input, textarea { font-family: inherit; }
 /* ── Floating File Category Bar ── */
 .floating-category-bar {
   position: fixed;
-  bottom: 28px;
+  bottom: 24px;
   left: 50%;
   transform: translateX(-50%);
   z-index: 100;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 8px 16px;
+  display: grid;
+  grid-template-columns: repeat(5, 42px);
+  gap: 6px;
+  padding: 5px;
   background: rgba(20, 20, 20, 0.45);
   backdrop-filter: blur(24px) saturate(150%);
   -webkit-backdrop-filter: blur(24px) saturate(150%);
@@ -1447,13 +1445,12 @@ input, textarea { font-family: inherit; }
 .category-item {
   display: flex;
   align-items: center;
-  gap: 8px;
-  padding: 8px 16px;
-  border-radius: 99px;
+  justify-content: center;
+  width: 42px;
+  height: 42px;
+  padding: 0;
+  border-radius: 50%;
   color: var(--text-secondary);
-  font-size: 0.78rem;
-  font-weight: 500;
-  letter-spacing: 0.01em;
   transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
   position: relative;
   background: transparent;
@@ -1486,7 +1483,7 @@ input, textarea { font-family: inherit; }
   transform: translateY(-1px) scale(0.97);
 }
 
-/* Selected/Active Tab State */
+/* Selected/Active State */
 .category-item.active {
   color: var(--text-primary);
   background: rgba(255, 255, 255, 0.12);
@@ -1526,22 +1523,17 @@ input, textarea { font-family: inherit; }
   transform: translateY(-2px) scale(0.97);
 }
 
-/* Responsive adjustment for Mobile Category bar */
+/* Responsive Mobile Category bar */
 @media (max-width: 900px) {
   .floating-category-bar {
-    width: 92%;
-    max-width: 500px;
     bottom: 20px;
-    padding: 6px 8px;
-    gap: 2px;
-    justify-content: space-around;
+    grid-template-columns: repeat(5, 38px);
+    gap: 4px;
+    padding: 4px;
   }
   .category-item {
-    padding: 8px 6px;
-    font-size: 0.65rem;
-    gap: 4px;
-    flex-direction: column;
-    align-items: center;
+    width: 38px;
+    height: 38px;
   }
   .category-item .cat-svg {
     width: 14px;
