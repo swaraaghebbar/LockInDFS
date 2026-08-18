@@ -1,63 +1,164 @@
-import { useState, useEffect, useCallback, useMemo } from 'react';
+import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { useAuth } from '../AuthContext.jsx';
-import { fetchFiles, downloadFile, deleteFile, formatBytes, formatRelTime, getPreviewUrl } from '../api.js';
-import UploadZone from '../components/UploadZone.jsx';
+import { fetchFiles, downloadFile, deleteFile, formatBytes, formatRelTime, getPreviewUrl, uploadFile } from '../api.js';
 import FilePreviewModal from '../components/FilePreviewModal.jsx';
 
-function FileCard({ file, onSelect, onDelete, onDownload }) {
-  const ext = file.filename.split('.').pop()?.toLowerCase() || '';
-  const isImage = ['jpg', 'jpeg', 'png', 'gif', 'webp', 'svg'].includes(ext);
-  const previewUrl = getPreviewUrl(file.id);
+/* ── File type badge helper ─────────────────────────── */
+function getTypeBadge(filename) {
+  const ext = filename.split('.').pop()?.toLowerCase() || '';
+  if (['jpg','jpeg','png','gif','webp','svg'].includes(ext)) return 'IMG';
+  if (['mp4','webm','mov'].includes(ext)) return 'VID';
+  if (['mp3','wav','ogg','flac'].includes(ext)) return 'AUD';
+  if (ext === 'pdf') return 'PDF';
+  if (['zip','tar','gz','rar','7z'].includes(ext)) return 'ZIP';
+  if (['js','ts','jsx','tsx','py','go','rs','cpp','c','java'].includes(ext)) return 'CODE';
+  if (['md','txt','csv'].includes(ext)) return 'TXT';
+  return ext.slice(0,4).toUpperCase() || 'FILE';
+}
 
-  let typeBadge = ext.toUpperCase();
-  if (['jpg', 'jpeg', 'png', 'gif', 'webp'].includes(ext)) typeBadge = 'IMG';
-  if (['mp4', 'webm'].includes(ext)) typeBadge = 'VIDEO';
-  if (['mp3', 'wav', 'ogg'].includes(ext)) typeBadge = 'AUDIO';
-  if (ext === 'pdf') typeBadge = 'PDF';
-
+/* ── Single File Row ────────────────────────────────── */
+function FileRow({ file, onSelect, onDelete, onDownload }) {
   return (
-    <div className="user-file-card" onClick={() => onSelect(file)}>
-      <div className="file-card-preview">
-        {isImage ? (
-          <img src={previewUrl} alt={file.filename} className="card-thumb" />
-        ) : (
-          <div className="card-icon-fallback">
-            <span className="type-badge">{typeBadge}</span>
-          </div>
-        )}
+    <div className="file-row" onClick={() => onSelect(file)}>
+      <div className="file-row-icon">{getTypeBadge(file.filename)}</div>
+      <div className="file-row-info">
+        <div className="file-row-name" title={file.filename}>{file.filename}</div>
+        <div className="file-row-meta">{formatRelTime(file.created_at)}</div>
       </div>
-
-      <div className="file-card-info">
-        <span className="file-card-title" title={file.filename}>
-          {file.filename}
-        </span>
-        <div className="file-card-sub">
-          <span>{formatBytes(file.size)}</span>
-          <span className="dot-sep">•</span>
-          <span>{formatRelTime(file.created_at)}</span>
-        </div>
-      </div>
-
-      <div className="file-card-actions" onClick={e => e.stopPropagation()}>
+      <div className="file-row-size">{formatBytes(file.size)}</div>
+      <div className="file-row-actions" onClick={e => e.stopPropagation()}>
         <button
-          className="btn-icon"
+          className="file-action-btn"
           title="Download"
           onClick={() => onDownload(file)}
-        >
-          ⬇
-        </button>
+        >↓</button>
         <button
-          className="btn-icon danger"
+          className="file-action-btn danger"
           title="Delete"
           onClick={() => onDelete(file)}
-        >
-          🗑
-        </button>
+        >✕</button>
       </div>
     </div>
   );
 }
 
+/* ── Upload Panel (integrated) ─────────────────────── */
+function UploadPanel({ onUploaded, addToast }) {
+  const [dragging, setDragging] = useState(false);
+  const [uploading, setUploading] = useState(false);
+  const [uploadingName, setUploadingName] = useState('');
+  const [success, setSuccess] = useState(false);
+  const inputRef = useRef(null);
+
+  const handleFiles = useCallback(async (files) => {
+    const file = files[0];
+    if (!file) return;
+    setUploadingName(file.name);
+    setUploading(true);
+    setSuccess(false);
+    try {
+      const result = await uploadFile(file);
+      setSuccess(true);
+      addToast(`Uploaded "${file.name}"`, 'success');
+      onUploaded(result);
+      setTimeout(() => setSuccess(false), 3000);
+    } catch (e) {
+      addToast(`Upload failed: ${e.message}`, 'error');
+    } finally {
+      setUploading(false);
+      setUploadingName('');
+      if (inputRef.current) inputRef.current.value = '';
+    }
+  }, [onUploaded, addToast]);
+
+  const onDrop = (e) => {
+    e.preventDefault();
+    setDragging(false);
+    handleFiles(e.dataTransfer.files);
+  };
+
+  return (
+    <div className="upload-panel">
+      <div className="upload-panel-header">
+        <div className="upload-pending-info">
+          <div className="upload-pending-count">
+            {uploading ? '···' : success ? '✓' : '+'}
+          </div>
+          <div className="upload-pending-label">
+            {uploading ? 'Uploading' : success ? 'Locked in' : 'Upload file'}
+          </div>
+          {uploading && (
+            <div className="upload-pending-size">{uploadingName}</div>
+          )}
+        </div>
+
+        {!uploading && !success && (
+          <button
+            className="upload-cta-btn"
+            onClick={() => inputRef.current?.click()}
+          >
+            ↑ Upload
+          </button>
+        )}
+      </div>
+
+      {/* Progress bar */}
+      {uploading && (
+        <div className="upload-progress-wrap">
+          <div className="upload-progress-bar-track">
+            <div className="upload-progress-bar-fill" style={{ width: '100%' }} />
+          </div>
+          <div className="upload-progress-file">
+            Encrypting &amp; distributing — {uploadingName}
+          </div>
+        </div>
+      )}
+
+      {/* Success state */}
+      {success && (
+        <div className="upload-success">
+          <span>✓</span>
+          <span>Stored securely across the network</span>
+        </div>
+      )}
+
+      {/* Drop zone */}
+      {!uploading && !success && (
+        <div
+          className={`drop-zone ${dragging ? 'drag-over' : ''}`}
+          onDragOver={(e) => { e.preventDefault(); setDragging(true); }}
+          onDragLeave={() => setDragging(false)}
+          onDrop={onDrop}
+          onClick={() => inputRef.current?.click()}
+        >
+          <input
+            ref={inputRef}
+            type="file"
+            id="file-input"
+            onChange={(e) => handleFiles(e.target.files)}
+            style={{ display: 'none' }}
+          />
+          <span className="drop-zone-icon">⬡</span>
+          <p className="drop-zone-text">
+            <strong>Drop a file here</strong><br />
+            or click to browse
+          </p>
+        </div>
+      )}
+
+      {/* Subtle info */}
+      {!uploading && !success && (
+        <div style={{ marginTop: 'auto', paddingTop: 16 }}>
+          <p style={{ fontSize: '0.68rem', color: 'var(--text-muted)', lineHeight: 1.6, letterSpacing: '0.02em' }}>
+            Files are AES-GCM encrypted in-browser · split into 1 MiB chunks · replicated 3× across the node cluster
+          </p>
+        </div>
+      )}
+    </div>
+  );
+}
+
+/* ── Main Dashboard ─────────────────────────────────── */
 export default function UserDashboard() {
   const { user, logout, refetchUser } = useAuth();
   const [files, setFiles] = useState([]);
@@ -66,7 +167,6 @@ export default function UserDashboard() {
   const [selectedFile, setSelectedFile] = useState(null);
   const [confirmDelete, setConfirmDelete] = useState(null);
   const [toasts, setToasts] = useState([]);
-  const [activeTab, setActiveTab] = useState('my-files');
 
   const addToast = useCallback((message, type = 'success') => {
     const id = Date.now();
@@ -85,14 +185,11 @@ export default function UserDashboard() {
     }
   }, [addToast]);
 
-  useEffect(() => {
-    loadFiles();
-  }, [loadFiles]);
+  useEffect(() => { loadFiles(); }, [loadFiles]);
 
-  const handleUploaded = useCallback((result) => {
+  const handleUploaded = useCallback(() => {
     loadFiles();
     refetchUser();
-    setActiveTab('my-files');
   }, [loadFiles, refetchUser]);
 
   const handleDeleteConfirmed = async () => {
@@ -131,141 +228,120 @@ export default function UserDashboard() {
   const quotaPct = Math.min(100, Math.round((usedBytes / quotaBytes) * 100));
 
   return (
-    <div className="user-app-layout">
-      {/* ── Header ── */}
-      <header className="user-header">
-        <div className="header-logo">
-          <div className="header-logo-icon">⬡</div>
-          <span>LockIn</span>
-        </div>
+    <div className="dash-page">
 
-        <div className="search-bar-wrap">
-          <span className="search-icon">🔍</span>
-          <input
-            type="text"
-            className="search-input"
-            placeholder="Search your encrypted files..."
-            value={searchQuery}
-            onChange={e => setSearchQuery(e.target.value)}
-          />
-          {searchQuery && (
-            <button className="clear-search" onClick={() => setSearchQuery('')}>✕</button>
-          )}
-        </div>
+      {/* ── App Container ── */}
+      <div className="dash-container">
+        {/* Cinematic background */}
+        <div className="dash-bg" />
 
-        <div className="header-user-profile">
-          <div className="user-quota-mini">
-            <span className="quota-text">{formatBytes(usedBytes)} / {formatBytes(quotaBytes)}</span>
-            <div className="quota-track">
-              <div className="quota-fill" style={{ width: `${quotaPct}%` }} />
-            </div>
+        {/* Header */}
+        <header className="dash-header">
+          <div className="dash-wordmark">
+            <div className="dash-wordmark-dot" />
+            LOCKIN
           </div>
-          <img src={user?.picture} alt={user?.name} className="user-avatar-header" />
-          <button className="btn btn-ghost btn-sm" onClick={logout}>Sign Out</button>
-        </div>
-      </header>
 
-      {/* ── Main Layout ── */}
-      <div className="user-body">
-        {/* Sidebar */}
-        <aside className="user-sidebar">
-          <button
-            className={`user-nav-btn ${activeTab === 'my-files' ? 'active' : ''}`}
-            onClick={() => setActiveTab('my-files')}
-          >
-            <span className="nav-icon">📁</span> My Files ({files.length})
-          </button>
-          <button
-            className={`user-nav-btn ${activeTab === 'upload' ? 'active' : ''}`}
-            onClick={() => setActiveTab('upload')}
-          >
-            <span className="nav-icon">☁️</span> Upload File
-          </button>
-
-          <div className="sidebar-storage-card">
-            <div className="storage-card-header">
-              <span>Storage Usage</span>
-              <span className="storage-pct">{quotaPct}%</span>
-            </div>
-            <div className="progress-bar">
-              <div className="progress-fill" style={{ width: `${quotaPct}%` }} />
-            </div>
-            <span className="storage-card-sub">
-              {formatBytes(quotaBytes - usedBytes)} remaining of 1 GB
-            </span>
+          {/* Search */}
+          <div className="dash-search-wrap">
+            <span className="dash-search-icon">⌕</span>
+            <input
+              type="text"
+              className="dash-search-input"
+              placeholder="Search files…"
+              value={searchQuery}
+              onChange={e => setSearchQuery(e.target.value)}
+            />
+            {searchQuery && (
+              <button className="dash-search-clear" onClick={() => setSearchQuery('')}>✕</button>
+            )}
           </div>
-        </aside>
 
-        {/* Content Area */}
-        <main className="user-main">
-          {activeTab === 'upload' && (
-            <div className="upload-page-card">
-              <h2 className="section-title">Upload Encrypted File</h2>
-              <p className="page-subtitle">
-                Files are AES-256 encrypted, split into 3 chunks, and replicated across the distributed cluster.
-              </p>
-              <div className="card" style={{ marginTop: 16 }}>
-                <UploadZone onUploaded={handleUploaded} addToast={addToast} />
+          {/* Right side */}
+          <div className="dash-header-right">
+            <div className="dash-quota-wrap">
+              <div className="dash-quota-text">
+                {formatBytes(usedBytes)} / {formatBytes(quotaBytes)}
+              </div>
+              <div className="dash-quota-track">
+                <div className="dash-quota-fill" style={{ width: `${quotaPct}%` }} />
               </div>
             </div>
-          )}
+            <img
+              src={user?.picture}
+              alt={user?.name}
+              className="dash-avatar"
+              title={user?.name}
+            />
+            <button className="dash-signout-btn" onClick={logout}>Sign out</button>
+          </div>
+        </header>
 
-          {activeTab === 'my-files' && (
-            <>
-              <div className="files-section-header">
-                <div>
-                  <h1 className="page-title">My Files</h1>
-                  <p className="page-subtitle">
-                    {filteredFiles.length} {filteredFiles.length === 1 ? 'file' : 'files'}{' '}
-                    {searchQuery ? `matching "${searchQuery}"` : 'stored securely'}
-                  </p>
+        {/* Main body — two columns */}
+        <div className="dash-body">
+
+          {/* Files Panel */}
+          <div className="files-panel">
+            <div className="files-panel-header">
+              <div>
+                <div className="files-panel-title">Your Files</div>
+                <div className="files-panel-count">{filteredFiles.length}</div>
+                <div className="files-panel-subcount">
+                  {searchQuery
+                    ? `matching "${searchQuery}"`
+                    : 'stored securely'}
                 </div>
-                <button
-                  className="btn btn-primary"
-                  onClick={() => setActiveTab('upload')}
-                >
-                  + Upload New
-                </button>
               </div>
+            </div>
 
+            <div className="file-list">
               {loading ? (
-                <div className="files-grid">
-                  {[1, 2, 3, 4, 5, 6].map(i => (
-                    <div key={i} className="skeleton" style={{ height: 180, borderRadius: 14 }} />
-                  ))}
-                </div>
+                [1,2,3,4,5].map(i => (
+                  <div key={i} className="file-row-skeleton">
+                    <div className="skeleton-box" style={{ width: 32, height: 32, borderRadius: 8, flexShrink: 0 }} />
+                    <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 5 }}>
+                      <div className="skeleton-box" style={{ height: 12, width: '60%' }} />
+                      <div className="skeleton-box" style={{ height: 10, width: '35%' }} />
+                    </div>
+                    <div className="skeleton-box" style={{ width: 48, height: 10 }} />
+                  </div>
+                ))
               ) : filteredFiles.length === 0 ? (
-                <div className="empty-state">
-                  <span className="empty-icon">🗂</span>
-                  <p className="empty-text">
-                    {searchQuery ? 'No files match your search filter' : 'No files uploaded yet'}
-                  </p>
-                  {!searchQuery && (
-                    <button
-                      className="btn btn-primary"
-                      style={{ marginTop: 14 }}
-                      onClick={() => setActiveTab('upload')}
-                    >
-                      Upload your first file
-                    </button>
-                  )}
+                <div className="files-empty">
+                  <div className="files-empty-icon">⬡</div>
+                  <div className="files-empty-text">
+                    {searchQuery ? 'No files match your search' : 'No files uploaded yet'}
+                  </div>
                 </div>
               ) : (
-                <div className="files-grid">
-                  {filteredFiles.map(file => (
-                    <FileCard
-                      key={file.id}
-                      file={file}
-                      onSelect={setSelectedFile}
-                      onDelete={setConfirmDelete}
-                      onDownload={handleDownload}
-                    />
-                  ))}
-                </div>
+                filteredFiles.map(file => (
+                  <FileRow
+                    key={file.id}
+                    file={file}
+                    onSelect={setSelectedFile}
+                    onDelete={setConfirmDelete}
+                    onDownload={handleDownload}
+                  />
+                ))
               )}
-            </>
-          )}
-        </main>
+            </div>
+          </div>
+
+          {/* Upload Panel */}
+          <UploadPanel onUploaded={handleUploaded} addToast={addToast} />
+        </div>
+
+        {/* Footer */}
+        <footer className="dash-footer">
+          <span className="dash-footer-tag">
+            Stored across the LockIn network
+          </span>
+          <div className="dash-footer-dots">
+            <div className="dash-footer-dot active" title="Coordinator online" />
+            <div className="dash-footer-dot active" title="Node cluster" />
+            <div className="dash-footer-dot" title="Offline node" />
+          </div>
+        </footer>
       </div>
 
       {/* ── File Preview Modal ── */}
@@ -281,19 +357,19 @@ export default function UserDashboard() {
       {confirmDelete && (
         <div className="overlay" onClick={() => setConfirmDelete(null)}>
           <div className="modal" onClick={e => e.stopPropagation()}>
-            <h3 className="modal-title">Delete "{confirmDelete.filename}"?</h3>
-            <p className="modal-body">
-              This file will be permanently queued for garbage collection from the distributed cluster.
-            </p>
+            <div className="modal-title">Delete "{confirmDelete.filename}"?</div>
+            <div className="modal-body">
+              This file will be permanently removed from the distributed cluster.
+            </div>
             <div className="modal-actions">
-              <button className="btn btn-ghost" onClick={() => setConfirmDelete(null)}>Cancel</button>
-              <button className="btn btn-danger" onClick={handleDeleteConfirmed}>Delete File</button>
+              <button className="btn-ghost" onClick={() => setConfirmDelete(null)}>Cancel</button>
+              <button className="btn-danger" onClick={handleDeleteConfirmed}>Delete</button>
             </div>
           </div>
         </div>
       )}
 
-      {/* ── Toast Notifications ── */}
+      {/* ── Toasts ── */}
       <div className="toast-container">
         {toasts.map(t => (
           <div key={t.id} className={`toast ${t.type}`}>{t.message}</div>

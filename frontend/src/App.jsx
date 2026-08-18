@@ -9,8 +9,8 @@ export default function App() {
   if (loading) {
     return (
       <div className="auth-loading-screen">
-        <div className="login-logo-hex spinning">⬡</div>
-        <p className="loading-text">Loading secure session...</p>
+        <div className="auth-loading-logo" />
+        <p className="loading-text">Loading secure session…</p>
       </div>
     );
   }
