@@ -19,7 +19,7 @@ export default function LoginPage() {
             </div>
 
             <h1 className="login-title">
-              {isAdminMode ? 'LockIn' : 'LockIn'}
+              {isAdminMode ? 'System Admin Access' : 'Private Cloud Vault'}
             </h1>
             <p className="login-subtitle">
               {isAdminMode
