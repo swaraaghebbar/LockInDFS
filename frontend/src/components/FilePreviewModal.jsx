@@ -5,6 +5,7 @@ export default function FilePreviewModal({ file, onClose, addToast }) {
   const [textData, setTextData] = useState(null);
   const [loadingText, setLoadingText] = useState(false);
   const [downloading, setDownloading] = useState(false);
+  const [playing, setPlaying] = useState(false);
 
   const previewUrl = getPreviewUrl(file.id);
   const filename = file.filename || '';
@@ -78,8 +79,23 @@ export default function FilePreviewModal({ file, onClose, addToast }) {
 
           {isAudio && (
             <div className="preview-media-wrapper audio-wrapper">
-              <div className="audio-disc">🎵</div>
-              <audio controls src={previewUrl} className="preview-audio" />
+              {/* Dynamic Vinyl Record Player */}
+              <div className={`vinyl-player ${playing ? 'playing' : ''}`}>
+                <div className="vinyl-arm"></div>
+                <div className="vinyl-disc">
+                  <div className="vinyl-label">
+                    <div className="vinyl-center"></div>
+                  </div>
+                </div>
+              </div>
+              <audio
+                controls
+                src={previewUrl}
+                className="preview-audio"
+                onPlay={() => setPlaying(true)}
+                onPause={() => setPlaying(false)}
+                onEnded={() => setPlaying(false)}
+              />
             </div>
           )}
 

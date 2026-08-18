@@ -77,39 +77,6 @@ function useCountUp(target, trigger) {
   return displayed;
 }
 
-/* ── Unified Image & Document Inline Hover Preview ─────── */
-function InlinePreview({ file }) {
-  const filename = file.filename || '';
-  const ext = filename.split('.').pop()?.toLowerCase() || '';
-  const isImage = ['jpg', 'jpeg', 'png', 'gif', 'webp', 'svg'].includes(ext);
-  const isDoc = ['pdf', 'doc', 'docx', 'txt', 'md', 'csv', 'xls', 'xlsx'].includes(ext);
-  const previewUrl = getPreviewUrl(file.id);
-
-  if (isImage) {
-    return (
-      <div className="card-inline-preview">
-        <img src={previewUrl} alt={filename} />
-      </div>
-    );
-  }
-  if (isDoc) {
-    return (
-      <div className="card-inline-preview doc-preview-card">
-        {/* Render PDF in iframe, or file details if text/doc */}
-        {ext === 'pdf' ? (
-          <iframe src={previewUrl} title={filename} scroll="no" style={{ pointerEvents: 'none', border: 'none', width: '100%', height: '100%', overflow: 'hidden' }} />
-        ) : (
-          <div className="doc-preview-text-box">
-            <span className="doc-preview-ext">.{ext.toUpperCase()}</span>
-            <span className="doc-preview-name">{filename.slice(0, 20)}</span>
-          </div>
-        )}
-      </div>
-    );
-  }
-  return null;
-}
-
 /* ── Single File Row (list mode) ────────────────────── */
 function FileRow({ file, onSelect, onDelete, onDownload }) {
   return (
@@ -118,7 +85,6 @@ function FileRow({ file, onSelect, onDelete, onDownload }) {
         <div className="file-row-icon">
           <FileTypeIcon filename={file.filename} />
         </div>
-        <InlinePreview file={file} />
       </div>
       <div className="file-row-info">
         <div className="file-row-name" title={file.filename}>{file.filename}</div>
@@ -141,7 +107,6 @@ function FileCard({ file, onSelect, onDelete, onDownload }) {
         <div className="file-card-icon">
           <FileTypeIcon filename={file.filename} />
         </div>
-        <InlinePreview file={file} />
       </div>
       <div className="file-card-name" title={file.filename}>{file.filename}</div>
       <div className="file-card-meta">{formatBytes(file.size)} · {formatRelTime(file.created_at)}</div>
