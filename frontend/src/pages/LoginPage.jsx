@@ -95,7 +95,7 @@ export default function LoginPage() {
           <span className="cinema-footer-tag">
             Distributed · Encrypted · Resilient
           </span>
-          <span className="cinema-footer-copyright">© 2026 LockinDFS</span>
+          <span className="cinema-footer-copyright">© 2026 Lockin</span>
         </footer>
       </div>
 
