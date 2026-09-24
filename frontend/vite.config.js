@@ -17,7 +17,6 @@ export default defineConfig({
         changeOrigin: true,
         secure: false,          // accept self-signed TLS cert
         rewrite: (path) => path.replace(/^\/api/, ''),
-        followRedirects: false, // let 302s pass through to the browser
       },
       '/auth/callback': {
         target: 'http://127.0.0.1:8000',

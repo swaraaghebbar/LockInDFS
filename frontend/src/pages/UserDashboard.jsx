@@ -3,54 +3,6 @@ import { useAuth } from '../AuthContext.jsx';
 import { fetchFiles, downloadFile, deleteFile, formatBytes, formatRelTime, getPreviewUrl, uploadFile } from '../api.js';
 import FilePreviewModal from '../components/FilePreviewModal.jsx';
 
-/* ── Profile Dropdown ──────────────── */
-function ProfileDropdown({ user }) {
-  const [open, setOpen] = useState(false);
-  const dropRef = useRef(null);
-
-  useEffect(() => {
-    const handler = (e) => {
-      if (dropRef.current && !dropRef.current.contains(e.target)) {
-        setOpen(false);
-      }
-    };
-    document.addEventListener('click', handler);
-    return () => document.removeEventListener('click', handler);
-  }, []);
-
-  return (
-    <div className="profile-dropdown-wrap" ref={dropRef}>
-      <button
-        className="profile-dropdown-trigger"
-        onClick={(e) => { e.stopPropagation(); setOpen(v => !v); }}
-        type="button"
-      >
-        <img src={user?.picture} alt={user?.name} className="dash-avatar" title={user?.name} />
-      </button>
-      {open && (
-        <div className="profile-dropdown-menu">
-          <div className="profile-dropdown-info">
-            <span className="profile-dropdown-name">{user?.name}</span>
-            <span className="profile-dropdown-email">{user?.email}</span>
-          </div>
-          <div className="profile-dropdown-divider" />
-          <a
-            href="/api/auth/logout"
-            className="profile-dropdown-item"
-          >
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" width="14" height="14">
-              <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
-              <polyline points="16 17 21 12 16 7" />
-              <line x1="21" y1="12" x2="9" y2="12" />
-            </svg>
-            Sign out
-          </a>
-        </div>
-      )}
-    </div>
-  );
-}
-
 /* ── Category metadata ───────────────────────────────── */
 const CATEGORIES = {
   all:             { label: 'All Files',        exts: null },
@@ -212,22 +164,9 @@ export default function UserDashboard() {
   const [uploading, setUploading] = useState(false);
   const [uploadingName, setUploadingName] = useState('');
   const [dragging, setDragging] = useState(false);
-  const [mobileSearchFocused, setMobileSearchFocused] = useState(false);
 
   const hiddenInputRef = useRef(null);
   const uploadTriggerRef = useRef(null);
-  const searchWrapRef = useRef(null);
-
-  /* ── Outside click to close search dropdown ── */
-  useEffect(() => {
-    const handleOutsideClick = (e) => {
-      if (searchWrapRef.current && !searchWrapRef.current.contains(e.target)) {
-        setMobileSearchFocused(false);
-      }
-    };
-    document.addEventListener('pointerdown', handleOutsideClick);
-    return () => document.removeEventListener('pointerdown', handleOutsideClick);
-  }, []);
 
   /* ── change category with animation ── */
   const changeCategory = useCallback((cat) => {
@@ -331,14 +270,10 @@ export default function UserDashboard() {
         return true;
       });
     }
-    return result;
-  }, [files, activeCategory]);
-
-  const searchResults = useMemo(() => {
-    if (!searchQuery.trim()) return [];
+    if (!searchQuery.trim()) return result;
     const q = searchQuery.toLowerCase();
-    return files.filter(f => f.filename.toLowerCase().includes(q) || f.id.toLowerCase().includes(q));
-  }, [files, searchQuery]);
+    return result.filter(f => f.filename.toLowerCase().includes(q) || f.id.toLowerCase().includes(q));
+  }, [files, searchQuery, activeCategory]);
 
   /* ── Animated count ── */
   const animatedCount = useCountUp(loading ? 0 : filteredFiles.length, animKey);
@@ -381,8 +316,8 @@ export default function UserDashboard() {
           </div>
 
           {/* Search + All Files pill */}
-          <div className={`dash-search-area${mobileSearchFocused ? ' mobile-search-expanded' : ''}`}>
-            <div className="dash-search-wrap" ref={searchWrapRef}>
+          <div className="dash-search-area">
+            <div className="dash-search-wrap">
               <span className="dash-search-icon">⌕</span>
               <input
                 type="text"
@@ -390,52 +325,9 @@ export default function UserDashboard() {
                 placeholder="Search files…"
                 value={searchQuery}
                 onChange={e => setSearchQuery(e.target.value)}
-                onFocus={() => setMobileSearchFocused(true)}
-                autoComplete="off"
-                autoCorrect="off"
-                autoCapitalize="off"
-                spellCheck="false"
               />
               {searchQuery && (
                 <button className="dash-search-clear" onClick={() => setSearchQuery('')}>✕</button>
-              )}
-              {/* Search Results Dropdown */}
-              {searchQuery.trim() !== '' && (
-                <div className="search-dropdown-menu">
-                  {searchResults.length === 0 ? (
-                    <div className="search-dropdown-empty">No files found</div>
-                  ) : (
-                    searchResults.map(file => {
-                      const handleSelectFile = (e) => {
-                        if (e) {
-                          e.preventDefault();
-                          e.stopPropagation();
-                        }
-                        setSelectedFile(file);
-                        setSearchQuery('');
-                        setMobileSearchFocused(false);
-                      };
-                      return (
-                        <div 
-                          key={file.id} 
-                          className="search-dropdown-item"
-                          onPointerDown={handleSelectFile}
-                          onMouseDown={handleSelectFile}
-                          onTouchEnd={handleSelectFile}
-                          onClick={handleSelectFile}
-                        >
-                          <div className="search-dropdown-icon">
-                            <FileTypeIcon filename={file.filename} />
-                          </div>
-                          <div className="search-dropdown-info">
-                            <div className="search-dropdown-name">{file.filename}</div>
-                            <div className="search-dropdown-meta">{formatBytes(file.size)}</div>
-                          </div>
-                        </div>
-                      );
-                    })
-                  )}
-                </div>
               )}
             </div>
 
@@ -455,7 +347,7 @@ export default function UserDashboard() {
             </button>
           </div>
 
-          {/* Right side — unified profile dropdown for portrait, landscape, and desktop */}
+          {/* Right side */}
           <div className="dash-header-right">
             <div className="dash-quota-wrap">
               <div className="dash-quota-text">{formatBytes(usedBytes)} / {formatBytes(quotaBytes)}</div>
@@ -463,7 +355,8 @@ export default function UserDashboard() {
                 <div className="dash-quota-fill" style={{ width: `${quotaPct}%` }} />
               </div>
             </div>
-            <ProfileDropdown user={user} />
+            <img src={user?.picture} alt={user?.name} className="dash-avatar" title={user?.name} />
+            <button className="dash-signout-btn" onClick={logout}>Sign out</button>
           </div>
         </header>
 
@@ -478,7 +371,7 @@ export default function UserDashboard() {
                   {loading ? '—' : animatedCount}
                 </div>
                 <div className="files-panel-subcount">
-                  {activeCategory === 'all' ? 'stored securely' : `${catLabel.toLowerCase()} files`}
+                  {searchQuery ? `matching "${searchQuery}"` : 'stored securely'}
                 </div>
               </div>
 
@@ -533,9 +426,11 @@ export default function UserDashboard() {
                   <div className="files-empty">
                     <div className="files-empty-icon">⬡</div>
                     <div className="files-empty-text">
-                      {activeCategory === 'all'
-                        ? 'No files yet — drag anywhere to upload'
-                        : `No ${catLabel.toLowerCase()} stored`}
+                      {searchQuery
+                        ? `No ${catLabel.toLowerCase()} match your search`
+                        : activeCategory === 'all'
+                          ? 'No files yet — drag anywhere to upload'
+                          : `No ${catLabel.toLowerCase()} stored`}
                     </div>
                   </div>
                 ) : (
@@ -567,9 +462,11 @@ export default function UserDashboard() {
                   <div className="files-empty" style={{ gridColumn: '1/-1' }}>
                     <div className="files-empty-icon">⬡</div>
                     <div className="files-empty-text">
-                      {activeCategory === 'all'
-                        ? 'No files yet — drag anywhere to upload'
-                        : `No ${catLabel.toLowerCase()} stored`}
+                      {searchQuery
+                        ? `No ${catLabel.toLowerCase()} match your search`
+                        : activeCategory === 'all'
+                          ? 'No files yet — drag anywhere to upload'
+                          : `No ${catLabel.toLowerCase()} stored`}
                     </div>
                   </div>
                 ) : (

@@ -241,21 +241,14 @@ async def auth_me(user: dict = Depends(require_user)):
     }
 
 
-@app.api_route("/auth/logout", methods=["GET", "POST"])
+@app.post("/auth/logout")
 async def auth_logout(request: Request):
-    """Clear the session cookie and redirect to home page."""
+    """Clear the session cookie."""
     token = request.cookies.get(SESSION_COOKIE)
     if token:
         await db.delete_session(token)
-    
-    if request.method == "GET":
-        response = RedirectResponse("/", status_code=302)
-    else:
-        response = JSONResponse({"status": "logged_out"})
-        
+    response = JSONResponse({"status": "logged_out"})
     response.delete_cookie(SESSION_COOKIE, path="/")
-    response.delete_cookie(SESSION_COOKIE, path="/", httponly=True, samesite="lax")
-    response.delete_cookie(SESSION_COOKIE)
     return response
 
 
