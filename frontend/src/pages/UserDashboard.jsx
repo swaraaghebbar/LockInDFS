@@ -19,9 +19,13 @@ function ProfileDropdown({ user, onSignOut }) {
   }, []);
 
   const handleSignOut = (e) => {
-    if (e) e.stopPropagation();
+    if (e) {
+      e.stopPropagation();
+    }
     setOpen(false);
-    if (onSignOut) onSignOut();
+    if (onSignOut) {
+      onSignOut();
+    }
   };
 
   return (
@@ -36,7 +40,12 @@ function ProfileDropdown({ user, onSignOut }) {
             <span className="profile-dropdown-email">{user?.email}</span>
           </div>
           <div className="profile-dropdown-divider" />
-          <button type="button" className="profile-dropdown-item" onClick={handleSignOut}>
+          <button
+            type="button"
+            className="profile-dropdown-item"
+            onPointerDown={(e) => e.stopPropagation()}
+            onClick={handleSignOut}
+          >
             Sign out
           </button>
         </div>
@@ -395,7 +404,18 @@ export default function UserDashboard() {
                       <div 
                         key={file.id} 
                         className="search-dropdown-item"
-                        onClick={() => setSelectedFile(file)}
+                        onMouseDown={(e) => {
+                          e.preventDefault();
+                          e.stopPropagation();
+                          setSelectedFile(file);
+                          setMobileSearchFocused(false);
+                        }}
+                        onClick={(e) => {
+                          e.preventDefault();
+                          e.stopPropagation();
+                          setSelectedFile(file);
+                          setMobileSearchFocused(false);
+                        }}
                       >
                         <div className="search-dropdown-icon">
                           <FileTypeIcon filename={file.filename} />
