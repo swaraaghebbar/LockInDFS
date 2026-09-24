@@ -421,7 +421,7 @@ export default function UserDashboard() {
                 <button className="dash-search-clear" onClick={() => setSearchQuery('')}>✕</button>
               )}
               {/* Search Results Dropdown */}
-              {searchQuery.trim() && mobileSearchFocused && (
+              {searchQuery.trim() !== '' && (
                 <div className="search-dropdown-menu">
                   {searchResults.length === 0 ? (
                     <div className="search-dropdown-empty">No files found</div>
@@ -433,6 +433,7 @@ export default function UserDashboard() {
                           e.stopPropagation();
                         }
                         setSelectedFile(file);
+                        setSearchQuery('');
                         setMobileSearchFocused(false);
                       };
                       return (
