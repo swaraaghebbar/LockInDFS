@@ -1359,7 +1359,7 @@ input, textarea { font-family: inherit; }
   inset: 0;
   background: rgba(0,0,0,0.88);
   backdrop-filter: blur(10px);
-  z-index: 100;
+  z-index: 100000;
   display: grid;
   place-items: center;
   animation: fadeIn 0.2s ease;
@@ -1871,12 +1871,11 @@ input, textarea { font-family: inherit; }
     left: 10px;
     font-size: 0.7rem;
   }
-  /* Hide desktop header-right, show mobile */
-  .dash-header-right-desktop {
-    display: none !important;
-  }
-  .dash-header-right-mobile {
-    display: flex !important;
+  /* Unified header right */
+  .dash-header-right {
+    display: flex;
+    align-items: center;
+    gap: 12px;
   }
 
   /* ── Floating category bar — closer to container ── */

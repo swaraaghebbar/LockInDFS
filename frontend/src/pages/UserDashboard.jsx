@@ -219,6 +219,18 @@ export default function UserDashboard() {
 
   const hiddenInputRef = useRef(null);
   const uploadTriggerRef = useRef(null);
+  const searchWrapRef = useRef(null);
+
+  /* ── Outside click to close search dropdown ── */
+  useEffect(() => {
+    const handleOutsideClick = (e) => {
+      if (searchWrapRef.current && !searchWrapRef.current.contains(e.target)) {
+        setMobileSearchFocused(false);
+      }
+    };
+    document.addEventListener('pointerdown', handleOutsideClick);
+    return () => document.removeEventListener('pointerdown', handleOutsideClick);
+  }, []);
 
   /* ── change category with animation ── */
   const changeCategory = useCallback((cat) => {
@@ -373,7 +385,7 @@ export default function UserDashboard() {
 
           {/* Search + All Files pill */}
           <div className={`dash-search-area${mobileSearchFocused ? ' mobile-search-expanded' : ''}`}>
-            <div className="dash-search-wrap">
+            <div className="dash-search-wrap" ref={searchWrapRef}>
               <span className="dash-search-icon">⌕</span>
               <input
                 type="text"
@@ -382,10 +394,6 @@ export default function UserDashboard() {
                 value={searchQuery}
                 onChange={e => setSearchQuery(e.target.value)}
                 onFocus={() => setMobileSearchFocused(true)}
-                onBlur={() => {
-                  // delay hiding so click events on dropdown items can fire
-                  setTimeout(() => setMobileSearchFocused(false), 200);
-                }}
                 autoComplete="off"
                 autoCorrect="off"
                 autoCapitalize="off"
@@ -400,32 +408,34 @@ export default function UserDashboard() {
                   {searchResults.length === 0 ? (
                     <div className="search-dropdown-empty">No files found</div>
                   ) : (
-                    searchResults.map(file => (
-                      <div 
-                        key={file.id} 
-                        className="search-dropdown-item"
-                        onMouseDown={(e) => {
+                    searchResults.map(file => {
+                      const handleSelectFile = (e) => {
+                        if (e) {
                           e.preventDefault();
                           e.stopPropagation();
-                          setSelectedFile(file);
-                          setMobileSearchFocused(false);
-                        }}
-                        onClick={(e) => {
-                          e.preventDefault();
-                          e.stopPropagation();
-                          setSelectedFile(file);
-                          setMobileSearchFocused(false);
-                        }}
-                      >
-                        <div className="search-dropdown-icon">
-                          <FileTypeIcon filename={file.filename} />
+                        }
+                        setSelectedFile(file);
+                        setMobileSearchFocused(false);
+                      };
+                      return (
+                        <div 
+                          key={file.id} 
+                          className="search-dropdown-item"
+                          onPointerDown={handleSelectFile}
+                          onMouseDown={handleSelectFile}
+                          onTouchEnd={handleSelectFile}
+                          onClick={handleSelectFile}
+                        >
+                          <div className="search-dropdown-icon">
+                            <FileTypeIcon filename={file.filename} />
+                          </div>
+                          <div className="search-dropdown-info">
+                            <div className="search-dropdown-name">{file.filename}</div>
+                            <div className="search-dropdown-meta">{formatBytes(file.size)}</div>
+                          </div>
                         </div>
-                        <div className="search-dropdown-info">
-                          <div className="search-dropdown-name">{file.filename}</div>
-                          <div className="search-dropdown-meta">{formatBytes(file.size)}</div>
-                        </div>
-                      </div>
-                    ))
+                      );
+                    })
                   )}
                 </div>
               )}
@@ -447,20 +457,14 @@ export default function UserDashboard() {
             </button>
           </div>
 
-          {/* Right side — desktop */}
-          <div className="dash-header-right dash-header-right-desktop">
+          {/* Right side — unified profile dropdown for portrait, landscape, and desktop */}
+          <div className="dash-header-right">
             <div className="dash-quota-wrap">
               <div className="dash-quota-text">{formatBytes(usedBytes)} / {formatBytes(quotaBytes)}</div>
               <div className="dash-quota-track">
                 <div className="dash-quota-fill" style={{ width: `${quotaPct}%` }} />
               </div>
             </div>
-            <img src={user?.picture} alt={user?.name} className="dash-avatar" title={user?.name} />
-            <button className="dash-signout-btn" onClick={logout}>Sign out</button>
-          </div>
-
-          {/* Right side — mobile profile dropdown */}
-          <div className="dash-header-right dash-header-right-mobile">
             <ProfileDropdown user={user} onSignOut={logout} />
           </div>
         </header>
