@@ -4,7 +4,7 @@ import { fetchFiles, downloadFile, deleteFile, formatBytes, formatRelTime, getPr
 import FilePreviewModal from '../components/FilePreviewModal.jsx';
 
 /* ── Profile Dropdown ──────────────── */
-function ProfileDropdown({ user, onSignOut }) {
+function ProfileDropdown({ user }) {
   const [open, setOpen] = useState(false);
   const dropRef = useRef(null);
 
@@ -18,21 +18,11 @@ function ProfileDropdown({ user, onSignOut }) {
     return () => document.removeEventListener('click', handler);
   }, []);
 
-  const handleSignOut = async (e) => {
-    if (e) {
-      e.stopPropagation();
-    }
-    setOpen(false);
-    if (onSignOut) {
-      await onSignOut();
-    }
-  };
-
   return (
     <div className="profile-dropdown-wrap" ref={dropRef}>
-      <button 
-        className="profile-dropdown-trigger" 
-        onClick={(e) => { e.stopPropagation(); setOpen(v => !v); }} 
+      <button
+        className="profile-dropdown-trigger"
+        onClick={(e) => { e.stopPropagation(); setOpen(v => !v); }}
         type="button"
       >
         <img src={user?.picture} alt={user?.name} className="dash-avatar" title={user?.name} />
@@ -44,10 +34,9 @@ function ProfileDropdown({ user, onSignOut }) {
             <span className="profile-dropdown-email">{user?.email}</span>
           </div>
           <div className="profile-dropdown-divider" />
-          <button
-            type="button"
+          <a
+            href="/api/auth/logout"
             className="profile-dropdown-item"
-            onClick={handleSignOut}
           >
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" width="14" height="14">
               <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
@@ -55,7 +44,7 @@ function ProfileDropdown({ user, onSignOut }) {
               <line x1="21" y1="12" x2="9" y2="12" />
             </svg>
             Sign out
-          </button>
+          </a>
         </div>
       )}
     </div>
@@ -474,7 +463,7 @@ export default function UserDashboard() {
                 <div className="dash-quota-fill" style={{ width: `${quotaPct}%` }} />
               </div>
             </div>
-            <ProfileDropdown user={user} onSignOut={logout} />
+            <ProfileDropdown user={user} />
           </div>
         </header>
 
