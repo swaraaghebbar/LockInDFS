@@ -41,7 +41,11 @@ export function AuthProvider({ children }) {
     } catch (e) {
       console.error('Logout error:', e);
     } finally {
-      window.location.href = '/api/auth/logout';
+      try {
+        localStorage.clear();
+        sessionStorage.clear();
+      } catch (err) {}
+      window.location.href = window.location.origin + '/?logout=' + Date.now();
     }
   }, []);
 
