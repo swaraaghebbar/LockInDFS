@@ -35,13 +35,14 @@ export function AuthProvider({ children }) {
   }, []);
 
   const logout = useCallback(async () => {
-    setUser(null);
     try {
       await logoutUser();
     } catch (e) {
       console.error('Logout error:', e);
     } finally {
-      window.location.href = '/';
+      setUser(null);
+      window.location.replace('/');
+      window.location.reload();
     }
   }, []);
 

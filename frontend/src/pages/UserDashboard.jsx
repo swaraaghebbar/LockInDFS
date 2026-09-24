@@ -3,11 +3,10 @@ import { useAuth } from '../AuthContext.jsx';
 import { fetchFiles, downloadFile, deleteFile, formatBytes, formatRelTime, getPreviewUrl, uploadFile } from '../api.js';
 import FilePreviewModal from '../components/FilePreviewModal.jsx';
 
-/* ── Profile Dropdown (mobile sign-out) ──────────────── */
+/* ── Profile Dropdown ──────────────── */
 function ProfileDropdown({ user, onSignOut }) {
   const [open, setOpen] = useState(false);
   const dropRef = useRef(null);
-  const signingOutRef = useRef(false);
 
   useEffect(() => {
     const handler = (e) => {
@@ -19,16 +18,13 @@ function ProfileDropdown({ user, onSignOut }) {
     return () => document.removeEventListener('pointerdown', handler);
   }, []);
 
-  const triggerSignOut = (e) => {
+  const handleSignOut = async (e) => {
     if (e) {
-      e.preventDefault();
       e.stopPropagation();
     }
-    if (signingOutRef.current) return;
-    signingOutRef.current = true;
     setOpen(false);
     if (onSignOut) {
-      onSignOut();
+      await onSignOut();
     }
   };
 
@@ -42,11 +38,7 @@ function ProfileDropdown({ user, onSignOut }) {
         <img src={user?.picture} alt={user?.name} className="dash-avatar" title={user?.name} />
       </button>
       {open && (
-        <div 
-          className="profile-dropdown-menu"
-          onPointerDown={(e) => e.stopPropagation()}
-          onTouchStart={(e) => e.stopPropagation()}
-        >
+        <div className="profile-dropdown-menu">
           <div className="profile-dropdown-info">
             <span className="profile-dropdown-name">{user?.name}</span>
             <span className="profile-dropdown-email">{user?.email}</span>
@@ -55,9 +47,7 @@ function ProfileDropdown({ user, onSignOut }) {
           <button
             type="button"
             className="profile-dropdown-item"
-            onPointerDown={triggerSignOut}
-            onTouchEnd={triggerSignOut}
-            onClick={triggerSignOut}
+            onClick={handleSignOut}
           >
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" width="14" height="14">
               <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
