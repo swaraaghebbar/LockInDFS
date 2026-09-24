@@ -7,6 +7,7 @@ import FilePreviewModal from '../components/FilePreviewModal.jsx';
 function ProfileDropdown({ user, onSignOut }) {
   const [open, setOpen] = useState(false);
   const dropRef = useRef(null);
+  const signingOutRef = useRef(false);
 
   useEffect(() => {
     const handler = (e) => {
@@ -18,10 +19,13 @@ function ProfileDropdown({ user, onSignOut }) {
     return () => document.removeEventListener('pointerdown', handler);
   }, []);
 
-  const handleSignOut = (e) => {
+  const triggerSignOut = (e) => {
     if (e) {
+      e.preventDefault();
       e.stopPropagation();
     }
+    if (signingOutRef.current) return;
+    signingOutRef.current = true;
     setOpen(false);
     if (onSignOut) {
       onSignOut();
@@ -30,11 +34,19 @@ function ProfileDropdown({ user, onSignOut }) {
 
   return (
     <div className="profile-dropdown-wrap" ref={dropRef}>
-      <button className="profile-dropdown-trigger" onClick={() => setOpen(v => !v)} type="button">
+      <button 
+        className="profile-dropdown-trigger" 
+        onClick={(e) => { e.stopPropagation(); setOpen(v => !v); }} 
+        type="button"
+      >
         <img src={user?.picture} alt={user?.name} className="dash-avatar" title={user?.name} />
       </button>
       {open && (
-        <div className="profile-dropdown-menu">
+        <div 
+          className="profile-dropdown-menu"
+          onPointerDown={(e) => e.stopPropagation()}
+          onTouchStart={(e) => e.stopPropagation()}
+        >
           <div className="profile-dropdown-info">
             <span className="profile-dropdown-name">{user?.name}</span>
             <span className="profile-dropdown-email">{user?.email}</span>
@@ -43,9 +55,15 @@ function ProfileDropdown({ user, onSignOut }) {
           <button
             type="button"
             className="profile-dropdown-item"
-            onPointerDown={(e) => e.stopPropagation()}
-            onClick={handleSignOut}
+            onPointerDown={triggerSignOut}
+            onTouchEnd={triggerSignOut}
+            onClick={triggerSignOut}
           >
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" width="14" height="14">
+              <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
+              <polyline points="16 17 21 12 16 7" />
+              <line x1="21" y1="12" x2="9" y2="12" />
+            </svg>
             Sign out
           </button>
         </div>
