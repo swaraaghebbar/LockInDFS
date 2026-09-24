@@ -291,10 +291,8 @@ export default function UserDashboard() {
   };
 
   const filteredFiles = useMemo(() => {
-    /* If the user is searching, always search across ALL files */
-    const isSearching = searchQuery.trim().length > 0;
     let result = files;
-    if (!isSearching && activeCategory !== 'all') {
+    if (activeCategory !== 'all') {
       result = result.filter(file => {
         const ext = file.filename.split('.').pop()?.toLowerCase() || '';
         const isPicVid = ['jpg','jpeg','png','gif','webp','svg','mp4','webm','mov'].includes(ext);
@@ -307,10 +305,14 @@ export default function UserDashboard() {
         return true;
       });
     }
-    if (!isSearching) return result;
+    return result;
+  }, [files, activeCategory]);
+
+  const searchResults = useMemo(() => {
+    if (!searchQuery.trim()) return [];
     const q = searchQuery.toLowerCase();
-    return result.filter(f => f.filename.toLowerCase().includes(q) || f.id.toLowerCase().includes(q));
-  }, [files, searchQuery, activeCategory]);
+    return files.filter(f => f.filename.toLowerCase().includes(q) || f.id.toLowerCase().includes(q));
+  }, [files, searchQuery]);
 
   /* ── Animated count ── */
   const animatedCount = useCountUp(loading ? 0 : filteredFiles.length, animKey);
@@ -363,7 +365,10 @@ export default function UserDashboard() {
                 value={searchQuery}
                 onChange={e => setSearchQuery(e.target.value)}
                 onFocus={() => setMobileSearchFocused(true)}
-                onBlur={() => setMobileSearchFocused(false)}
+                onBlur={() => {
+                  // delay hiding so click events on dropdown items can fire
+                  setTimeout(() => setMobileSearchFocused(false), 200);
+                }}
                 autoComplete="off"
                 autoCorrect="off"
                 autoCapitalize="off"
@@ -371,6 +376,30 @@ export default function UserDashboard() {
               />
               {searchQuery && (
                 <button className="dash-search-clear" onClick={() => setSearchQuery('')}>✕</button>
+              )}
+              {/* Search Results Dropdown */}
+              {searchQuery.trim() && mobileSearchFocused && (
+                <div className="search-dropdown-menu">
+                  {searchResults.length === 0 ? (
+                    <div className="search-dropdown-empty">No files found</div>
+                  ) : (
+                    searchResults.map(file => (
+                      <div 
+                        key={file.id} 
+                        className="search-dropdown-item"
+                        onClick={() => setSelectedFile(file)}
+                      >
+                        <div className="search-dropdown-icon">
+                          <FileTypeIcon filename={file.filename} />
+                        </div>
+                        <div className="search-dropdown-info">
+                          <div className="search-dropdown-name">{file.filename}</div>
+                          <div className="search-dropdown-meta">{formatBytes(file.size)}</div>
+                        </div>
+                      </div>
+                    ))
+                  )}
+                </div>
               )}
             </div>
 
@@ -419,7 +448,7 @@ export default function UserDashboard() {
                   {loading ? '—' : animatedCount}
                 </div>
                 <div className="files-panel-subcount">
-                  {searchQuery ? `matching "${searchQuery}"` : 'stored securely'}
+                  {activeCategory === 'all' ? 'stored securely' : `${catLabel.toLowerCase()} files`}
                 </div>
               </div>
 
@@ -474,11 +503,9 @@ export default function UserDashboard() {
                   <div className="files-empty">
                     <div className="files-empty-icon">⬡</div>
                     <div className="files-empty-text">
-                      {searchQuery
-                        ? `No ${catLabel.toLowerCase()} match your search`
-                        : activeCategory === 'all'
-                          ? 'No files yet — drag anywhere to upload'
-                          : `No ${catLabel.toLowerCase()} stored`}
+                      {activeCategory === 'all'
+                        ? 'No files yet — drag anywhere to upload'
+                        : `No ${catLabel.toLowerCase()} stored`}
                     </div>
                   </div>
                 ) : (
@@ -510,11 +537,9 @@ export default function UserDashboard() {
                   <div className="files-empty" style={{ gridColumn: '1/-1' }}>
                     <div className="files-empty-icon">⬡</div>
                     <div className="files-empty-text">
-                      {searchQuery
-                        ? `No ${catLabel.toLowerCase()} match your search`
-                        : activeCategory === 'all'
-                          ? 'No files yet — drag anywhere to upload'
-                          : `No ${catLabel.toLowerCase()} stored`}
+                      {activeCategory === 'all'
+                        ? 'No files yet — drag anywhere to upload'
+                        : `No ${catLabel.toLowerCase()} stored`}
                     </div>
                   </div>
                 ) : (
