@@ -10,15 +10,23 @@ function ProfileDropdown({ user, onSignOut }) {
 
   useEffect(() => {
     const handler = (e) => {
-      if (dropRef.current && !dropRef.current.contains(e.target)) setOpen(false);
+      if (dropRef.current && !dropRef.current.contains(e.target)) {
+        setOpen(false);
+      }
     };
-    document.addEventListener('mousedown', handler);
-    return () => document.removeEventListener('mousedown', handler);
+    document.addEventListener('pointerdown', handler);
+    return () => document.removeEventListener('pointerdown', handler);
   }, []);
+
+  const handleSignOut = (e) => {
+    if (e) e.stopPropagation();
+    setOpen(false);
+    if (onSignOut) onSignOut();
+  };
 
   return (
     <div className="profile-dropdown-wrap" ref={dropRef}>
-      <button className="profile-dropdown-trigger" onClick={() => setOpen(v => !v)}>
+      <button className="profile-dropdown-trigger" onClick={() => setOpen(v => !v)} type="button">
         <img src={user?.picture} alt={user?.name} className="dash-avatar" title={user?.name} />
       </button>
       {open && (
@@ -28,7 +36,7 @@ function ProfileDropdown({ user, onSignOut }) {
             <span className="profile-dropdown-email">{user?.email}</span>
           </div>
           <div className="profile-dropdown-divider" />
-          <button className="profile-dropdown-item" onClick={onSignOut}>
+          <button type="button" className="profile-dropdown-item" onClick={handleSignOut}>
             Sign out
           </button>
         </div>

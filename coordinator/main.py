@@ -248,7 +248,7 @@ async def auth_logout(request: Request):
     if token:
         await db.delete_session(token)
     response = JSONResponse({"status": "logged_out"})
-    response.delete_cookie(SESSION_COOKIE, path="/")
+    response.delete_cookie(SESSION_COOKIE, path="/", httponly=True, samesite="lax")
     return response
 
 
