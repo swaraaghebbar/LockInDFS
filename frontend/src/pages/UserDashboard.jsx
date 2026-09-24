@@ -3,6 +3,40 @@ import { useAuth } from '../AuthContext.jsx';
 import { fetchFiles, downloadFile, deleteFile, formatBytes, formatRelTime, getPreviewUrl, uploadFile } from '../api.js';
 import FilePreviewModal from '../components/FilePreviewModal.jsx';
 
+/* ── Profile Dropdown (mobile sign-out) ──────────────── */
+function ProfileDropdown({ user, onSignOut }) {
+  const [open, setOpen] = useState(false);
+  const dropRef = useRef(null);
+
+  useEffect(() => {
+    const handler = (e) => {
+      if (dropRef.current && !dropRef.current.contains(e.target)) setOpen(false);
+    };
+    document.addEventListener('mousedown', handler);
+    return () => document.removeEventListener('mousedown', handler);
+  }, []);
+
+  return (
+    <div className="profile-dropdown-wrap" ref={dropRef}>
+      <button className="profile-dropdown-trigger" onClick={() => setOpen(v => !v)}>
+        <img src={user?.picture} alt={user?.name} className="dash-avatar" title={user?.name} />
+      </button>
+      {open && (
+        <div className="profile-dropdown-menu">
+          <div className="profile-dropdown-info">
+            <span className="profile-dropdown-name">{user?.name}</span>
+            <span className="profile-dropdown-email">{user?.email}</span>
+          </div>
+          <div className="profile-dropdown-divider" />
+          <button className="profile-dropdown-item" onClick={onSignOut}>
+            Sign out
+          </button>
+        </div>
+      )}
+    </div>
+  );
+}
+
 /* ── Category metadata ───────────────────────────────── */
 const CATEGORIES = {
   all:             { label: 'All Files',        exts: null },
@@ -164,6 +198,7 @@ export default function UserDashboard() {
   const [uploading, setUploading] = useState(false);
   const [uploadingName, setUploadingName] = useState('');
   const [dragging, setDragging] = useState(false);
+  const [mobileSearchFocused, setMobileSearchFocused] = useState(false);
 
   const hiddenInputRef = useRef(null);
   const uploadTriggerRef = useRef(null);
@@ -256,8 +291,10 @@ export default function UserDashboard() {
   };
 
   const filteredFiles = useMemo(() => {
+    /* If the user is searching, always search across ALL files */
+    const isSearching = searchQuery.trim().length > 0;
     let result = files;
-    if (activeCategory !== 'all') {
+    if (!isSearching && activeCategory !== 'all') {
       result = result.filter(file => {
         const ext = file.filename.split('.').pop()?.toLowerCase() || '';
         const isPicVid = ['jpg','jpeg','png','gif','webp','svg','mp4','webm','mov'].includes(ext);
@@ -270,7 +307,7 @@ export default function UserDashboard() {
         return true;
       });
     }
-    if (!searchQuery.trim()) return result;
+    if (!isSearching) return result;
     const q = searchQuery.toLowerCase();
     return result.filter(f => f.filename.toLowerCase().includes(q) || f.id.toLowerCase().includes(q));
   }, [files, searchQuery, activeCategory]);
@@ -316,7 +353,7 @@ export default function UserDashboard() {
           </div>
 
           {/* Search + All Files pill */}
-          <div className="dash-search-area">
+          <div className={`dash-search-area${mobileSearchFocused ? ' mobile-search-expanded' : ''}`}>
             <div className="dash-search-wrap">
               <span className="dash-search-icon">⌕</span>
               <input
@@ -325,6 +362,12 @@ export default function UserDashboard() {
                 placeholder="Search files…"
                 value={searchQuery}
                 onChange={e => setSearchQuery(e.target.value)}
+                onFocus={() => setMobileSearchFocused(true)}
+                onBlur={() => setMobileSearchFocused(false)}
+                autoComplete="off"
+                autoCorrect="off"
+                autoCapitalize="off"
+                spellCheck="false"
               />
               {searchQuery && (
                 <button className="dash-search-clear" onClick={() => setSearchQuery('')}>✕</button>
@@ -347,8 +390,8 @@ export default function UserDashboard() {
             </button>
           </div>
 
-          {/* Right side */}
-          <div className="dash-header-right">
+          {/* Right side — desktop */}
+          <div className="dash-header-right dash-header-right-desktop">
             <div className="dash-quota-wrap">
               <div className="dash-quota-text">{formatBytes(usedBytes)} / {formatBytes(quotaBytes)}</div>
               <div className="dash-quota-track">
@@ -357,6 +400,11 @@ export default function UserDashboard() {
             </div>
             <img src={user?.picture} alt={user?.name} className="dash-avatar" title={user?.name} />
             <button className="dash-signout-btn" onClick={logout}>Sign out</button>
+          </div>
+
+          {/* Right side — mobile profile dropdown */}
+          <div className="dash-header-right dash-header-right-mobile">
+            <ProfileDropdown user={user} onSignOut={logout} />
           </div>
         </header>
 
