@@ -14,17 +14,18 @@ function ProfileDropdown({ user, onSignOut }) {
         setOpen(false);
       }
     };
-    document.addEventListener('pointerdown', handler);
-    return () => document.removeEventListener('pointerdown', handler);
+    document.addEventListener('click', handler);
+    return () => document.removeEventListener('click', handler);
   }, []);
 
-  const handleSignOut = async (e) => {
+  const handleSignOut = (e) => {
     if (e) {
+      e.preventDefault();
       e.stopPropagation();
     }
     setOpen(false);
     if (onSignOut) {
-      await onSignOut();
+      onSignOut();
     }
   };
 
@@ -47,6 +48,8 @@ function ProfileDropdown({ user, onSignOut }) {
           <button
             type="button"
             className="profile-dropdown-item"
+            onMouseDown={handleSignOut}
+            onTouchEnd={handleSignOut}
             onClick={handleSignOut}
           >
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" width="14" height="14">
